@@ -10,7 +10,6 @@
 
 #include <stdlib.h>
 
-
 // set only the highest bit as 1, i.e. 1000...
 const unsigned int EMPTY=((unsigned int)1)<<(sizeof(unsigned int)*8-1); 
 

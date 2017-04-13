@@ -4,6 +4,9 @@ CC = g++
 
 CC_OPTION = -fomit-frame-pointer -W -Wall -Winline -DNDBUG -O3 -mpopcnt 
 
+#CC_OPTION = -W -Wall -Winline -DNDBUG -O3 -mpopcnt -pg
+
+
 # For debug
 # CC_OPTION = -g -fomit-frame-pointer -W -Wall -Winline
 

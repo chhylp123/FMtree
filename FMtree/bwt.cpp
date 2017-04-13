@@ -1,3 +1,4 @@
+// This is a demo program for showing how to call SACA_K.
 
 #include<stdio.h>
 #include<stdint.h>
@@ -23,13 +24,12 @@
 
 
 
-
 void SACA_K(unsigned char *s, unsigned int *SA, unsigned int n, 
            unsigned int K, unsigned int m, int level);
 
 
 
-void indenpendent_get_sa_fromFILE(unsigned int **sa, unsigned int cc, FILE *_ih_fp, char *refer)
+void indenpendent_get_sa_fromFILE(unsigned int **sa, unsigned int cc, char *refer)
 {
 	unsigned int i;
 	unsigned int n;
@@ -87,16 +87,36 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 {
 
 
-	unsigned int compress_occ = 448, compress_SA_flag = 224;
+	///这里SA要改
+	#define SA_counter_length 32
+
+	///这里要改
+	///unsigned int compress_occ = 448, compress_SA_flag = 224;
+	unsigned int compress_occ = 256, high_compress_occ=65536,compress_SA_flag = 224;
 	typedef uint64_t bwt_string_type;
-	typedef uint32_t SA_flag_string_type;
+
+	///这里SA要改
+	///typedef uint32_t SA_flag_string_type;
+	typedef uint64_t SA_flag_string_type;
+
+
+	typedef uint32_t high_occ_table_type;
 	unsigned int bwt_warp_number = sizeof(bwt_string_type)* 8 / 2;
 	unsigned int SA_flag_warp_number = sizeof(SA_flag_string_type)* 8;
 	uint64_t* long_SA_flag = NULL;
-	unsigned int single_occ_bwt = sizeof(bwt_string_type) / sizeof(unsigned);
+	///这里要改
+	///unsigned int single_occ_bwt = sizeof(bwt_string_type) / sizeof(unsigned);
+	unsigned int single_occ_bwt = sizeof(bwt_string_type) / sizeof(unsigned short);
 	unsigned int occ_words = 4 / single_occ_bwt;
 	unsigned int acctuall_bwt_gap = compress_occ + sizeof(unsigned int)* 4 * 8 / 2;
-	unsigned int acctuall_SA_flag_gap = compress_SA_flag + sizeof(SA_flag_string_type)* 8;
+
+	///这里SA要改
+	///unsigned int acctuall_SA_flag_gap = compress_SA_flag + sizeof(SA_flag_string_type)* 8;
+	unsigned int acctuall_SA_flag_gap = compress_SA_flag + SA_counter_length;
+	///这里SA要改
+	unsigned int SA_counter_shift_length = sizeof(SA_flag_string_type)* 8 - SA_counter_length;
+
+
 	bwt_string_type mode_4[4];
 	bwt_string_type mode = (bwt_string_type)-1;
 	bwt_string_type mode_high_1 = (bwt_string_type)1 << (SA_flag_warp_number - 1);
@@ -122,7 +142,8 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 	unsigned int *sa;
 	char ch;
 	unsigned int i, j;
-	FILE *f1, *f2, *fs, *fb;
+	///这里要改
+	FILE *f1, *f2, *fs, *fb, *fo;
 	ctoi['A'] = 0;
 	ctoi['C'] = 1;
 	ctoi['G'] = 2;
@@ -136,30 +157,65 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 
 
 	unsigned int occ_line_number = 0;
+	///this is the number of occ line
 	occ_line_number = (text_length + 1) / compress_occ + 1;
+	///this is the number of character which could be saved in one bwt_string_type
 	bwt_warp_number = sizeof(bwt_string_type)* 8 / 2;
+	///this is the number of bwt_string_type representing bwt string (does not include occ)
 	unsigned int bwt_length = (text_length + 1) / bwt_warp_number + 1;
+	///this is the number of bwt_string_type representing occ line
+	///这里要改
+	/**
 	unsigned int occ_byte_length = (occ_line_number * 4 * sizeof(unsigned int))
 		/ (sizeof(bwt_string_type)) + 1;
+	**/
+	unsigned int occ_byte_length = (occ_line_number * 4 * sizeof(unsigned short))
+		/ (sizeof(bwt_string_type)) + 1;
+	
+
+
 	bwt =
 		(bwt_string_type *)malloc(sizeof(bwt_string_type)*(bwt_length + occ_byte_length + 1));
 
+
+
+
+
+	///这里SA要改
+	/**
 	unsigned int SA_flag_length = (text_length + 1) / SA_flag_warp_number + 1;
 	unsigned int SA_flag_occ_length = (text_length + 1) / compress_SA_flag + 1;
 	unsigned int SA_occ_byte_length = (SA_flag_occ_length * 1 * sizeof(unsigned int))
 		/ (sizeof(SA_flag_string_type)) + 1;
-
-
-
 	SA_flag_string_type* SA_flag =
 		(SA_flag_string_type *)malloc(sizeof(SA_flag_string_type)*(SA_flag_length + SA_occ_byte_length + 1));
+	**/
+	unsigned int SA_flag_length = text_length + 1;
+	unsigned int SA_flag_occ_length = (text_length + 1) / compress_SA_flag + 1;
+	unsigned int SA_flag_byte_length = (SA_flag_length + SA_flag_occ_length * SA_counter_length + 1)
+		/ SA_flag_warp_number + 1;
+	SA_flag_string_type* SA_flag = (SA_flag_string_type *)malloc
+		(sizeof(SA_flag_string_type)*SA_flag_byte_length);
 
 
 
-	for (i = 0; i < SA_flag_length + SA_occ_byte_length + 1; i++)
+
+
+
+
+
+	///这里要改
+	high_occ_table_type* high_occ_table;
+	unsigned int high_occ_table_length = ((text_length + 1) / high_compress_occ + 1)*4+1;
+	high_occ_table = (high_occ_table_type*)malloc(sizeof(high_occ_table_type)*high_occ_table_length);
+
+	///这里SA要改
+	///for (i = 0; i < SA_flag_length + SA_occ_byte_length + 1; i++)
+	for (i = 0; i < SA_flag_byte_length; i++)
 	{
 		SA_flag[i] = (SA_flag_string_type)0;
 	}
+
 
 
 
@@ -197,11 +253,12 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 	f2 = fopen(filename, "w");
 	fs = fopen(filenames, "w");
 	fb = fopen(filenameb, "w");
+	fo = fopen(filenameo, "w");
 
 
 
 
-	indenpendent_get_sa_fromFILE(&sa, SA_length, f1, &refer[1]);
+	indenpendent_get_sa_fromFILE(&sa, SA_length, &refer[1]);
 
 
 	printf("SA has been generated!\n");
@@ -218,11 +275,23 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 
 
 	unsigned int tmp_occ = 0;
+	///这里要改
+	/**
 	unsigned int occ_bwt_number = (sizeof(unsigned int)* 4) / sizeof(bwt_string_type);
+	**/
+	unsigned int occ_bwt_number = (sizeof(unsigned short)* 4) / sizeof(bwt_string_type);
 	for (bwt_iterater = 0; bwt_iterater < occ_bwt_number; bwt_iterater++)
 	{
 		bwt[bwt_iterater] = (bwt_string_type)0;
 	}
+
+	///这里要改
+	unsigned int high_occ_table_iterater = 0;
+	for (high_occ_table_iterater = 0; high_occ_table_iterater < 4; high_occ_table_iterater++)
+	{
+		high_occ_table[high_occ_table_iterater] = 0;
+	}
+
 
 
 
@@ -303,14 +372,26 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 			bwt_iterater++;
 		}
 
+		
+		if (i % high_compress_occ == 0)
+		{
+			for (j = 0; j < 4; j++)
+			{
+				high_occ_table[high_occ_table_iterater] = nacgt[0][j + 1];
+				high_occ_table_iterater++;
+			}
+		}
+
 
 		if (i % compress_occ == 0)
 		{
 
 
-
+			///这里要改,single_bwt_occ=4
+			/**
 			unsigned int single_bwt_occ = sizeof(bwt_string_type) / sizeof(unsigned int);
-
+			**/
+			unsigned int single_bwt_occ = sizeof(bwt_string_type) / sizeof(unsigned short);
 
 
 
@@ -318,12 +399,33 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 			{
 
 				tmp_bwt = (bwt_string_type)0;
-
-				shift_length = (single_bwt_occ - j % single_bwt_occ - 1) * sizeof(unsigned int)* 8;
-
-
+				
+				///这里要改
+				///shift_length = (single_bwt_occ - j % single_bwt_occ - 1) * sizeof(unsigned int)* 8;
+				///j=0, shift_length = 48
+				///j=1, shift_length = 32
+				///j=2, shift_length = 16
+				///j=3, shift_length = 0
+				shift_length = (single_bwt_occ - j % single_bwt_occ - 1) * sizeof(unsigned short)* 8;
+				/**
+				fprintf(stderr, "j=%llu\n", j);
+				fprintf(stderr, "shift_length=%llu\n", shift_length);
+				**/
 
 				tmp_bwt = (bwt_string_type)nacgt[0][j + 1];
+
+				/**
+				fprintf(stderr, "tmp_bwt=%llu\n", tmp_bwt);
+				**/
+
+				///这里要改
+				tmp_bwt = tmp_bwt - high_occ_table[(i / high_compress_occ) * 4 + j];
+
+				/**
+				fprintf(stderr, "(i / high_compress_occ) * 4 + j=%llu\n", (i / high_compress_occ) * 4 + j);
+
+				fprintf(stderr, "tmp_bwt=%llu\n", tmp_bwt);
+				**/
 
 
 
@@ -339,7 +441,14 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 
 			}
 
-			bwt_iterater = bwt_iterater + single_bwt_occ;
+
+			///这里要改
+			///bwt_iterater = bwt_iterater + single_bwt_occ;
+			bwt_iterater = bwt_iterater + occ_words;
+			/**
+			fprintf(stderr, "single_bwt_occ=%llu\n", single_bwt_occ);
+			fprintf(stderr, "occ_words=%llu\n", occ_words);
+			**/
 
 
 
@@ -382,12 +491,22 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 
 	unsigned int SA_number = 0;
 
+	///这里SA要改
+	unsigned int number_of_SA_flag_bits = 0;
+
+
+
 	i = 0;
 
 	SA_flag[SA_flag_iterater] = (SA_flag_string_type)0;
 
-	SA_flag_iterater++;
 
+	///这里SA要改
+	///注意这里SA_flag_iterater并不能++
+	///SA_flag_iterater++;
+	number_of_SA_flag_bits = number_of_SA_flag_bits + SA_counter_length;
+
+	/**
 	while (1)
 	{
 
@@ -456,15 +575,122 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 	{
 		SA_flag_iterater++;
 	}
+	**/
+
+
+	while (1)
+	{
+
+		tmp_SA_flag = (SA_flag_string_type)0;
+
+		if (i >= SA_length)
+		{
+			break;
+		}
 
 
 
+		if (sa[i] % compress_sa == 0)
+		{
+			tmp_SA_flag = (SA_flag_string_type)1;
+			SA_number++;
+
+		}
+		else
+		{
+			tmp_SA_flag = (SA_flag_string_type)0;
+		}
 
 
 
+		///这里SA要改
+		///shift_length = SA_flag_warp_number - i % SA_flag_warp_number - 1;
+		shift_length = SA_flag_warp_number - number_of_SA_flag_bits % SA_flag_warp_number - 1;
+
+		tmp_SA_flag = tmp_SA_flag << shift_length;
 
 
 
+		SA_flag[SA_flag_iterater] = SA_flag[SA_flag_iterater] | tmp_SA_flag;
+
+
+		tmp_SA_flag = (SA_flag_string_type)0;
+
+
+
+		///这里SA要改
+		number_of_SA_flag_bits++;
+
+		i++;
+
+		///这里SA要改
+		/**
+		if (i%SA_flag_warp_number == 0)
+		{
+		SA_flag_iterater++;
+		}
+
+
+		if (i % compress_SA_flag == 0)
+		{
+
+		SA_flag[SA_flag_iterater] = SA_number;
+
+		SA_flag_iterater++;
+
+		}
+		**/
+		if (number_of_SA_flag_bits%SA_flag_warp_number == 0)
+		{
+			SA_flag_iterater++;
+		}
+		if (i % compress_SA_flag == 0)
+		{
+
+			if (number_of_SA_flag_bits % SA_flag_warp_number != 0)
+			{
+				fprintf(stderr, "ERROR! \n");
+			}
+
+
+
+			SA_flag[SA_flag_iterater] = SA_number;
+
+			SA_flag[SA_flag_iterater] = (SA_flag_string_type)(SA_flag[SA_flag_iterater] << SA_counter_shift_length);
+
+			number_of_SA_flag_bits = number_of_SA_flag_bits + SA_counter_length;
+
+		}
+
+
+		tmp_SA_flag = (SA_flag_string_type)0;
+
+
+	}
+
+
+	///这里SA要改
+	/**
+	if (i%SA_flag_warp_number != 0 &&
+	i % compress_SA_flag != 0)
+	{
+	SA_flag_iterater++;
+	}
+	**/
+	if (number_of_SA_flag_bits%SA_flag_warp_number != 0)
+	{
+		SA_flag_iterater++;
+	}
+
+	///这里SA要改,为了防止后面计算时溢出
+	SA_flag_iterater++;
+
+
+
+	///这里要改
+	fwrite(&high_occ_table_iterater, sizeof(unsigned int), 1, fo);
+	fwrite(high_occ_table, sizeof(high_occ_table_type), high_occ_table_iterater, fo);
+	printf("Occ has been writed!\n");
 
 
 
@@ -513,6 +739,13 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 
 	i = 0;
 
+	unsigned int tmp_site = 0;
+
+
+
+
+
+
 	while (1)
 	{
 
@@ -523,7 +756,32 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 
 		if (sa[i] % compress_sa == 0)
 		{
-			fwrite(&sa[i], sizeof(sa[i]), 1, fs);
+
+			if (compress_sa >= 4)
+			{
+				///如果前一位是$，那么在sa必然是0，这个绝壁是不符合要求
+				//所以不用记录，只是要判断是不是为0，为0就丢弃
+				//不过这东西应该是被保存成010000000000000000000这个数
+				//tmp_site = (unsigned int)0;
+				ch = refer[sa[i]] - 1;
+				tmp_site = (unsigned int)abs(ch);
+
+				tmp_site = tmp_site << 30;
+
+				tmp_site = tmp_site | (sa[i] / compress_sa);
+
+
+				fwrite(&tmp_site, sizeof(tmp_site), 1, fs);
+			}
+			else
+			{
+				fwrite(&sa[i], sizeof(sa[i]), 1, fs);
+			}
+
+			
+
+
+			
 			ijkijkijkijk++;
 		}
 
@@ -549,6 +807,9 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 
 	fwrite(&compress_sa, sizeof(unsigned int), 1, f2);
 	fwrite(&compress_occ, sizeof(unsigned int), 1, f2);
+	///这里要改
+	fwrite(&high_compress_occ, sizeof(unsigned int), 1, f2);
+	
 
 
 

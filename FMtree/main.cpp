@@ -13,20 +13,39 @@
 #include<ctype.h>
 #include "bwt.h"
 ///#include <nmmintrin.h>
+///这里要改
+///unsigned int compress_sa = 8, compress_occ = 448, compress_SA_flag=224;
+unsigned int compress_sa = 8, compress_occ = 256, high_compress_occ = 65536, compress_SA_flag = 224;
 
+///这里SA要改
+#define SA_counter_length 32
 
-unsigned int compress_sa = 8, compress_occ = 448, compress_SA_flag=224;
 typedef uint64_t bwt_string_type;
-typedef uint32_t SA_flag_string_type;
+///这里SA要改
+///typedef uint32_t SA_flag_string_type;
+typedef uint64_t SA_flag_string_type;
+
+typedef uint32_t high_occ_table_type;
 ///typedef unsigned int bwt_string_type;
 unsigned int bwt_warp_number = sizeof(bwt_string_type)* 8 / 2;
 unsigned int SA_flag_warp_number = sizeof(SA_flag_string_type)* 8;
 uint64_t tmp_SA_flag = (uint64_t)0;
 uint64_t* long_SA_flag = NULL;
-unsigned int single_occ_bwt = sizeof(bwt_string_type)/sizeof(unsigned);
+///这里要改
+///unsigned int single_occ_bwt = sizeof(bwt_string_type)/sizeof(unsigned);
+unsigned int single_occ_bwt = sizeof(bwt_string_type) / sizeof(unsigned short);
 unsigned int occ_words = 4 / single_occ_bwt;
-unsigned int acctuall_bwt_gap = compress_occ + sizeof(unsigned int)* 4 * 8 / 2;
-unsigned int acctuall_SA_flag_gap = compress_SA_flag + sizeof(SA_flag_string_type)*8;
+///这里要改
+///unsigned int acctuall_bwt_gap = compress_occ + sizeof(unsigned int)* 4 * 8 / 2;
+unsigned int acctuall_bwt_gap = compress_occ + sizeof(unsigned short)* 4 * 8 / 2;
+
+///这里SA要改
+///unsigned int acctuall_SA_flag_gap = compress_SA_flag + sizeof(SA_flag_string_type)*8;
+unsigned int acctuall_SA_flag_gap = compress_SA_flag + SA_counter_length;
+
+///这里SA要改
+unsigned int SA_counter_shift_length = sizeof(SA_flag_string_type)* 8 - SA_counter_length;
+
 bwt_string_type mode_4[4];
 bwt_string_type mode = (bwt_string_type)-1;
 bwt_string_type mode_high_1 = (bwt_string_type)1 << (SA_flag_warp_number-1);
@@ -35,6 +54,11 @@ bwt_string_type mode_32 = ((bwt_string_type)-1)>>32;
 bwt_string_type mode_high;
 bwt_string_type mode_low;
 SA_flag_string_type mode_SA_flag = (SA_flag_string_type)(((SA_flag_string_type)-1) << (sizeof(SA_flag_string_type)* 8 - 1));
+///这里SA要改
+SA_flag_string_type SA_pop_count_mode = (SA_flag_string_type)(((SA_flag_string_type)-1) >> SA_counter_length);
+
+
+
 
 bwt_string_type pop_count_mode[4];
 ///unsigned int cc;
@@ -49,6 +73,8 @@ char itoc[4] = { 'A', 'C', 'G', 'T' };
 
 unsigned int total_gap;
 unsigned int num_r = 10000, len_r = 12;
+unsigned int SA_header_mode = (unsigned int)(((unsigned int)-1) >> 2);
+unsigned int SA_header_mode_reverse = (unsigned int)(((unsigned int)-1) << 30);
 FILE* _rg_fp;
 
 unsigned int cnt_table[65536][4];
@@ -133,10 +159,10 @@ void dec_bit(bwt_string_type input)
 		///fprintf(stdout, "%u\n", i);
 
 
-		fprintf(stdout, "%u", bit_2[i]);
+		fprintf(stderr, "%u", bit_2[i]);
 	}
 
-	fprintf(stdout, "\n");
+	fprintf(stderr, "\n");
 
 }
 
@@ -1190,7 +1216,7 @@ int build_index()
 
 	
 	fprintf(stdout, "Please input the sampling distance D of SA (1 < D < 9):\n");
-	scanf("%llu", &compress_sa);
+	scanf("%u", &compress_sa);
 
 	if (compress_sa>=9 || compress_sa<=1)
 	{
@@ -1254,6 +1280,102 @@ int build_index()
 
 		refer[i] = ch;
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/**
+
+	unsigned int ctoi[256];
+
+	ctoi['A'] = 0;
+	ctoi['C'] = 1;
+	ctoi['G'] = 2;
+	ctoi['T'] = 3;
+	ctoi['a'] = 0;
+	ctoi['c'] = 1;
+	ctoi['g'] = 2;
+	ctoi['t'] = 3;
+
+	i = 0;
+
+	unsigned int four_bit_i = 0;
+
+	unsigned char tmp_char = 0;
+
+	while (i <text_length)
+	{
+		tmp_char = (unsigned char)0;
+
+		int inner_i_output = 3;
+
+
+
+		for (inner_i_output = 3; inner_i_output >=0; inner_i_output--)
+		{
+			tmp_char = tmp_char|
+				(unsigned char)((unsigned char)ctoi[refer[i]] << (inner_i_output * 2));
+			
+			///fprintf(stderr, "i=%u,refer[i]=%c\n", i, refer[i]);
+
+			///dec_bit(tmp_char);
+			
+
+			i++;
+
+			if (i >= text_length)
+			{
+				break;
+
+			}
+
+		}
+
+		refer[i / 4-1] = tmp_char;
+
+		
+		///fprintf(stderr, "refer[i / 4]= \n");
+		///dec_bit(refer[i / 4]);
+		
+
+		four_bit_i = i / 4;
+	}
+
+
+	
+	for (i = 0; i < four_bit_i; i++)
+	{
+		fprintf(stderr, "%c", refer[i]);
+		///tmp_char = refer[i];
+		///fprintf(stderr, "i=%u\n",i);
+		///dec_bit(tmp_char);
+	}
+	
+
+	return 0;
+
+	**/
+
+
+
+
 
 
 
@@ -1331,7 +1453,7 @@ unsigned int jhp_find_occ(unsigned int line, unsigned int *occ, int delta, bwt_s
 }
 
 
-unsigned int find_occ(unsigned int line, int delta, bwt_string_type *bwt)
+unsigned int find_occ(unsigned int line, int delta, bwt_string_type *bwt, high_occ_table_type* high_occ_table)
 {
 
 	///fprintf(stdout, "delta=%u\n", delta);
@@ -1342,6 +1464,9 @@ unsigned int find_occ(unsigned int line, int delta, bwt_string_type *bwt)
 	unsigned int b;
 
 	bwt_string_type ans = nacgt[0][delta];
+
+	///这里是增加的
+	ans = ans + high_occ_table[(line / high_compress_occ) * 4 + delta];
 
 	/**
 	fprintf(stdout, "delta=%llu\n",
@@ -1365,10 +1490,10 @@ unsigned int find_occ(unsigned int line, int delta, bwt_string_type *bwt)
 	fflush(stdout);
 	**/
 	
-
-	ans += 
-		(bwt[actually_line + delta / single_occ_bwt] 
-		>> ((single_occ_bwt - 1 - delta%single_occ_bwt) * 32))&mode_32;
+	///这里要改
+	///ans += (bwt[actually_line + delta / single_occ_bwt] >> ((single_occ_bwt - 1 - delta%single_occ_bwt) * 32))&mode_32;
+	///single_occ_bwt=4
+	ans += (bwt[actually_line] >> ((single_occ_bwt - 1 - delta) * 16))&mode_16;
 
 	/**
 	fprintf(stdout, "bwt[actually_line + delta / single_occ_bwt]=%llu\n", 
@@ -1999,7 +2124,7 @@ void find_occ_all_sp_ep(unsigned int sp, unsigned int ep, bwt_string_type *bwt,
 
 
 
-void find_occ_all_sp_ep_optimal(unsigned int sp, unsigned int ep, bwt_string_type *bwt,
+void find_occ_all_sp_ep_optimal(unsigned int sp, unsigned int ep, bwt_string_type *bwt, high_occ_table_type* high_occ_table,
 	unsigned int* ans_A_sp, unsigned int* ans_C_sp, unsigned int* ans_G_sp, unsigned int* ans_T_sp,
 	unsigned int* ans_A_ep, unsigned int* ans_C_ep, unsigned int* ans_G_ep, unsigned int* ans_T_ep)
 {
@@ -2012,6 +2137,9 @@ void find_occ_all_sp_ep_optimal(unsigned int sp, unsigned int ep, bwt_string_typ
 
 	bwt_string_type P_tmp, P_A, P_B;
 
+
+	///这里要改
+	/**
 	(*ans_A_sp) = 0;
 	(*ans_C_sp) = 0;
 	(*ans_G_sp) = 0;
@@ -2022,6 +2150,20 @@ void find_occ_all_sp_ep_optimal(unsigned int sp, unsigned int ep, bwt_string_typ
 	(*ans_C_ep) = 0;
 	(*ans_G_ep) = 0;
 	(*ans_T_ep) = 0;
+	**/
+
+	unsigned int high_occ_table_line = (sp / high_compress_occ) * 4;
+
+	(*ans_A_sp) = high_occ_table[high_occ_table_line];
+	(*ans_C_sp) = high_occ_table[high_occ_table_line + 1];
+	(*ans_G_sp) = high_occ_table[high_occ_table_line + 2];
+	(*ans_T_sp) = high_occ_table[high_occ_table_line + 3];
+
+	high_occ_table_line = (ep / high_compress_occ) * 4;
+	(*ans_A_ep) = high_occ_table[high_occ_table_line];
+	(*ans_C_ep) = high_occ_table[high_occ_table_line + 1];
+	(*ans_G_ep) = high_occ_table[high_occ_table_line + 2];
+	(*ans_T_ep) = high_occ_table[high_occ_table_line + 3];
 
 
 
@@ -2035,6 +2177,11 @@ void find_occ_all_sp_ep_optimal(unsigned int sp, unsigned int ep, bwt_string_typ
 
 
 
+
+	
+
+	///这里要改
+	/**
 	(*ans_A_sp) += (bwt[actually_line_sp] >> 32);
 
 	(*ans_C_sp) += bwt[actually_line_sp] & mode_32;
@@ -2060,8 +2207,30 @@ void find_occ_all_sp_ep_optimal(unsigned int sp, unsigned int ep, bwt_string_typ
 	(*ans_T_ep) += bwt[actually_line_ep] & mode_32;
 
 	actually_line_ep++;
+	**/
 
 
+	(*ans_A_sp) += (bwt[actually_line_sp] >> 48);
+
+	(*ans_C_sp) += (bwt[actually_line_sp] >> 32) & mode_16;
+
+	(*ans_G_sp) += (bwt[actually_line_sp] >> 16) & mode_16;
+
+	(*ans_T_sp) += bwt[actually_line_sp] & mode_16;
+
+	actually_line_sp++;
+
+
+
+	(*ans_A_ep) += (bwt[actually_line_ep] >> 48);
+
+	(*ans_C_ep) += (bwt[actually_line_ep] >> 32) & mode_16;
+
+	(*ans_G_ep) += (bwt[actually_line_ep] >> 16) & mode_16;
+
+	(*ans_T_ep) += bwt[actually_line_ep] & mode_16;
+
+	actually_line_ep++;
 
 
 
@@ -2482,7 +2651,8 @@ void find_occ_all_sp_ep_optimal(unsigned int sp, unsigned int ep, bwt_string_typ
 
 
 
-unsigned int get_sa(SA_flag_string_type* SA_flag, unsigned int line, bwt_string_type *bwt, unsigned int *sa)
+unsigned int get_sa(SA_flag_string_type* SA_flag, unsigned int line, bwt_string_type *bwt, high_occ_table_type* high_occ_table,
+	unsigned int *sa)
 {
 	unsigned int l = line;
 	bwt_string_type delta;
@@ -2527,7 +2697,7 @@ unsigned int get_sa(SA_flag_string_type* SA_flag, unsigned int line, bwt_string_
 
 		///fprintf(stdout, "delta=%u\n", delta);
 
-		l = find_occ(l, delta, bwt);
+		l = find_occ(l, delta, bwt, high_occ_table);
 
 		///fprintf(stdout, "l=%u\n", l);
 
@@ -2602,9 +2772,319 @@ unsigned int get_sa(SA_flag_string_type* SA_flag, unsigned int line, bwt_string_
 
 
 
-unsigned int get_sa_restrict_steps
+unsigned int get_sa_restrict_steps_more_than_3
 (SA_flag_string_type* SA_flag, unsigned int line, 
-bwt_string_type *bwt, unsigned int *sa, unsigned int need_step, unsigned int* accessed_sa)
+bwt_string_type *bwt, high_occ_table_type* high_occ_table,
+unsigned int *sa, unsigned int need_step, unsigned int* accessed_sa)
+{
+	unsigned int l = line;
+	bwt_string_type delta;
+	unsigned int i = 0;
+
+
+	if (line == shapline) return 0;
+
+
+	///这里SA要改
+	///unsigned int actually_line= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number + 1;
+	unsigned int actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+	///这里SA要改
+	///unsigned int last = l % compress_SA_flag;
+	unsigned int last = l % compress_SA_flag + SA_counter_length;
+
+
+	actually_line = actually_line + last / SA_flag_warp_number;
+
+
+
+
+	while (((SA_flag[actually_line] << (last % SA_flag_warp_number))&mode_SA_flag) == 0)
+	{
+
+		if (i>=need_step)
+		{
+			return 0;
+		}
+
+
+		///似乎只有这里要改，因为这里涉及到取BWT了
+		///这里做了修改
+		///actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 64;
+		actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 32;
+		delta = (bwt[actually_line / bwt_warp_number]
+			>> ((bwt_warp_number - actually_line%bwt_warp_number - 1) * 2))
+			&(bwt_string_type)3;
+
+
+		l = find_occ(l, delta, bwt, high_occ_table);
+
+
+		i++;
+
+		if (l == shapline)
+		{
+			(*accessed_sa) = i;
+
+			return i;
+		}
+			
+			
+			
+
+
+		///这里SA要改
+		///actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number + 1;
+		actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+		///这里SA要改
+		///last = l % compress_SA_flag;
+		last = l % compress_SA_flag + SA_counter_length;
+
+		actually_line = actually_line + last / SA_flag_warp_number;
+
+	}
+
+
+	actually_line
+		= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+	///这里SA要改
+	///unsigned int ans = SA_flag[actually_line];
+	unsigned int ans = SA_flag[actually_line] >> SA_counter_shift_length;
+
+
+	///这里SA要改
+	/**
+	if (last != 0)
+	{
+		actually_line++;
+
+
+
+		unsigned int j = 0;
+
+
+
+
+		///while (j + SA_flag_warp_number <= last)
+		while (j + 64 <= last)
+		{
+			tmp_SA_flag = (uint64_t)0;
+			tmp_SA_flag = SA_flag[actually_line++];
+			tmp_SA_flag = tmp_SA_flag << SA_flag_warp_number;
+			tmp_SA_flag = tmp_SA_flag | SA_flag[actually_line++];
+			ans = ans + __builtin_popcountll(tmp_SA_flag);
+
+			j = j + 64;
+
+		}
+
+
+		while (j + SA_flag_warp_number <= last)
+		{
+
+			ans = ans + __builtin_popcount(SA_flag[actually_line++]);
+
+			j = j + SA_flag_warp_number;
+
+		}
+
+
+
+
+
+		last = last - j;
+
+
+		if (last != 0)
+		{
+			///mode << (SA_flag_warp_number - last);
+			ans = ans +
+				__builtin_popcount((SA_flag_string_type)(SA_flag[actually_line++]
+				& (mode << (SA_flag_warp_number - last))));
+		}
+
+
+	}
+	**/
+	if (last != 0)
+	{
+		///主要last本身已经加过SA_counter_length了，所以这里j=0；否则就应该把j = SA_counter_length
+		unsigned int j = 0;
+		SA_flag_string_type tmp_SA_pop_count;
+		tmp_SA_pop_count = SA_flag[actually_line] & SA_pop_count_mode;
+
+
+
+
+		while (j + SA_flag_warp_number <= last)
+		{
+
+			ans = ans + __builtin_popcountll(tmp_SA_pop_count);
+
+			j = j + SA_flag_warp_number;
+
+			actually_line++;
+			tmp_SA_pop_count = SA_flag[actually_line];
+
+		}
+
+
+		last = last - j;
+
+
+		if (last != 0)
+		{
+			ans = ans +
+				__builtin_popcountll((SA_flag_string_type)(tmp_SA_pop_count
+				& (mode << (SA_flag_warp_number - last))));
+		}
+
+
+	}
+
+	(*accessed_sa) = (sa[ans] & SA_header_mode)*compress_sa + i;
+
+	return 1;
+}
+
+
+
+
+
+unsigned int get_sa_restrict_steps
+(SA_flag_string_type* SA_flag, unsigned int line,
+bwt_string_type *bwt, high_occ_table_type* high_occ_table,
+unsigned int *sa, unsigned int need_step, unsigned int* accessed_sa)
+{
+	unsigned int l = line;
+	bwt_string_type delta;
+	unsigned int i = 0;
+
+
+	if (line == shapline) return 0;
+
+
+	///这里SA要改
+	///unsigned int actually_line= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number + 1;
+	unsigned int actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+	///这里SA要改
+	///unsigned int last = l % compress_SA_flag;
+	unsigned int last = l % compress_SA_flag + SA_counter_length;
+
+
+	actually_line = actually_line + last / SA_flag_warp_number;
+
+
+
+
+	while (((SA_flag[actually_line] << (last % SA_flag_warp_number))&mode_SA_flag) == 0)
+	{
+
+		if (i >= need_step)
+		{
+			return 0;
+		}
+
+
+		///似乎只有这里要改，因为这里涉及到取BWT了
+		///这里做了修改
+		///actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 64;
+		actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 32;
+		delta = (bwt[actually_line / bwt_warp_number]
+			>> ((bwt_warp_number - actually_line%bwt_warp_number - 1) * 2))
+			&(bwt_string_type)3;
+
+
+		l = find_occ(l, delta, bwt, high_occ_table);
+
+
+		i++;
+
+		if (l == shapline)
+		{
+			(*accessed_sa) = i;
+
+			return i;
+		}
+
+
+
+
+
+		///这里SA要改
+		///actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number + 1;
+		actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+		///这里SA要改
+		///last = l % compress_SA_flag;
+		last = l % compress_SA_flag + SA_counter_length;
+
+		actually_line = actually_line + last / SA_flag_warp_number;
+
+	}
+
+
+	actually_line
+		= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+	///这里SA要改
+	///unsigned int ans = SA_flag[actually_line];
+	unsigned int ans = SA_flag[actually_line] >> SA_counter_shift_length;
+
+
+	///这里SA要改
+	if (last != 0)
+	{
+		///主要last本身已经加过SA_counter_length了，所以这里j=0；否则就应该把j = SA_counter_length
+		unsigned int j = 0;
+		SA_flag_string_type tmp_SA_pop_count;
+		tmp_SA_pop_count = SA_flag[actually_line] & SA_pop_count_mode;
+
+
+
+
+		while (j + SA_flag_warp_number <= last)
+		{
+
+			ans = ans + __builtin_popcountll(tmp_SA_pop_count);
+
+			j = j + SA_flag_warp_number;
+
+			actually_line++;
+			tmp_SA_pop_count = SA_flag[actually_line];
+
+		}
+
+
+		last = last - j;
+
+
+		if (last != 0)
+		{
+			ans = ans +
+				__builtin_popcountll((SA_flag_string_type)(tmp_SA_pop_count
+				& (mode << (SA_flag_warp_number - last))));
+		}
+
+
+	}
+
+
+	(*accessed_sa) = sa[ans] + i;
+
+	return 1;
+
+}
+
+
+/**
+
+unsigned int get_sa_restrict_steps
+(SA_flag_string_type* SA_flag, unsigned int line,
+bwt_string_type *bwt, high_occ_table_type* high_occ_table, unsigned int *sa, unsigned int need_step, unsigned int* accessed_sa)
 {
 	unsigned int l = line;
 	bwt_string_type delta;
@@ -2630,19 +3110,27 @@ bwt_string_type *bwt, unsigned int *sa, unsigned int need_step, unsigned int* ac
 	while (((SA_flag[actually_line] << (last % SA_flag_warp_number))&mode_SA_flag) == 0)
 	{
 
-		if (i>=need_step)
+		if (i >= need_step)
 		{
 			return 0;
 		}
 
-		actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 64;
 
+
+
+
+		///似乎只有这里要改，因为这里涉及到取BWT了
+		///这里做了修改
+
+
+
+		actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 32;
 		delta = (bwt[actually_line / bwt_warp_number]
 			>> ((bwt_warp_number - actually_line%bwt_warp_number - 1) * 2))
 			&(bwt_string_type)3;
 
 
-		l = find_occ(l, delta, bwt);
+		l = find_occ(l, delta, bwt, high_occ_table);
 
 
 		i++;
@@ -2653,9 +3141,9 @@ bwt_string_type *bwt, unsigned int *sa, unsigned int need_step, unsigned int* ac
 
 			return i;
 		}
-			
-			
-			
+
+
+
 
 
 
@@ -2732,20 +3220,18 @@ bwt_string_type *bwt, unsigned int *sa, unsigned int need_step, unsigned int* ac
 
 	return 1;
 }
+**/
 
 
 
 
 
-
-
-
-unsigned int get_sa_restrict_zero_steps
+unsigned int get_sa_restrict_zero_steps_more_than_3
 (SA_flag_string_type* SA_flag, unsigned int *sa, unsigned int sp, unsigned int* start)
 {
 	unsigned int l;
 	unsigned int i = 0;
-	uint64_t tmp_SA_flag;
+	///uint64_t tmp_SA_flag;
 	unsigned int last;
 
 	unsigned int actually_line;
@@ -2754,7 +3240,10 @@ unsigned int get_sa_restrict_zero_steps
 
 	unsigned int last_wods;
 
+	SA_flag_string_type tmp_SA_pop_count;
 
+
+	/**
 	l = sp;
 
 
@@ -2822,6 +3311,213 @@ unsigned int get_sa_restrict_zero_steps
 
 
 	}
+	**/
+
+
+
+	l = sp;
+
+
+	actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+	///这里SA要改
+	///last = l % compress_SA_flag;
+	last = l % compress_SA_flag + SA_counter_length;
+
+	///这里SA要改
+	///ans = SA_flag[actually_line];
+	ans = SA_flag[actually_line] >> SA_counter_shift_length;
+
+
+	///这里SA要改
+	if (last != 0)
+	{
+		///主要last本身已经加过SA_counter_length了，所以这里j=0；否则就应该把j = SA_counter_length
+		unsigned int j = 0;
+
+		tmp_SA_pop_count = SA_flag[actually_line] & SA_pop_count_mode;
+
+
+
+
+		while (j + SA_flag_warp_number <= last)
+		{
+
+			ans = ans + __builtin_popcountll(tmp_SA_pop_count);
+
+			j = j + SA_flag_warp_number;
+
+			actually_line++;
+			tmp_SA_pop_count = SA_flag[actually_line];
+
+		}
+
+
+		last = last - j;
+
+
+		if (last != 0)
+		{
+			ans = ans +
+				__builtin_popcountll((SA_flag_string_type)(tmp_SA_pop_count
+				& (mode << (SA_flag_warp_number - last))));
+		}
+
+
+	}
+
+
+	///(*start) = sa[ans];
+	(*start) = (sa[ans] & SA_header_mode)*compress_sa;
+
+
+	return 1;
+
+}
+
+
+
+
+unsigned int get_sa_restrict_zero_steps
+(SA_flag_string_type* SA_flag, unsigned int *sa, unsigned int sp, unsigned int* start)
+{
+	unsigned int l;
+	unsigned int i = 0;
+	///uint64_t tmp_SA_flag;
+	unsigned int last;
+
+	unsigned int actually_line;
+
+	unsigned int ans;
+
+	unsigned int last_wods;
+
+	SA_flag_string_type tmp_SA_pop_count;
+
+
+	/**
+	l = sp;
+
+
+	actually_line
+		= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number + 1;
+
+	last = l % compress_SA_flag;
+
+	actually_line = actually_line + last / SA_flag_warp_number;
+
+	if (((SA_flag[actually_line] << (last % SA_flag_warp_number))&mode_SA_flag) == 0)
+		return 0;
+
+
+
+	actually_line
+		= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+
+
+	ans = SA_flag[actually_line];
+
+
+
+
+	if (last != 0)
+	{
+		actually_line++;
+
+		unsigned int j = 0;
+
+
+		while (j + 64 <= last)
+		{
+			tmp_SA_flag = (uint64_t)0;
+			tmp_SA_flag = SA_flag[actually_line++];
+			tmp_SA_flag = tmp_SA_flag << SA_flag_warp_number;
+			tmp_SA_flag = tmp_SA_flag | SA_flag[actually_line++];
+			ans = ans + __builtin_popcountll(tmp_SA_flag);
+
+			j = j + 64;
+
+		}
+
+
+		while (j + SA_flag_warp_number <= last)
+		{
+
+			ans = ans + __builtin_popcount(SA_flag[actually_line++]);
+
+			j = j + SA_flag_warp_number;
+
+		}
+
+
+		last = last - j;
+
+
+		if (last != 0)
+		{
+			ans = ans +
+				__builtin_popcount((SA_flag_string_type)(SA_flag[actually_line++]
+				& (mode << (SA_flag_warp_number - last))));
+		}
+
+
+	}
+	**/
+
+
+
+	l = sp;
+
+
+	actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+	///这里SA要改
+	///last = l % compress_SA_flag;
+	last = l % compress_SA_flag + SA_counter_length;
+
+	///这里SA要改
+	///ans = SA_flag[actually_line];
+	ans = SA_flag[actually_line] >> SA_counter_shift_length;
+
+
+	///这里SA要改
+	if (last != 0)
+	{
+		///主要last本身已经加过SA_counter_length了，所以这里j=0；否则就应该把j = SA_counter_length
+		unsigned int j = 0;
+
+		tmp_SA_pop_count = SA_flag[actually_line] & SA_pop_count_mode;
+
+
+
+
+		while (j + SA_flag_warp_number <= last)
+		{
+
+			ans = ans + __builtin_popcountll(tmp_SA_pop_count);
+
+			j = j + SA_flag_warp_number;
+
+			actually_line++;
+			tmp_SA_pop_count = SA_flag[actually_line];
+
+		}
+
+
+		last = last - j;
+
+
+		if (last != 0)
+		{
+			ans = ans +
+				__builtin_popcountll((SA_flag_string_type)(tmp_SA_pop_count
+				& (mode << (SA_flag_warp_number - last))));
+		}
+
+
+	}
+
 
 	(*start) = sa[ans];
 
@@ -2968,26 +3664,33 @@ void direct_get_sa_interval_long
 {
 	unsigned int l;
 	unsigned int i = 0;
-	uint64_t tmp_SA_flag;
+	///uint64_t tmp_SA_flag;
 	unsigned int last;
 
 	unsigned int actually_line;
 
 	unsigned int ans;
 
+	SA_flag_string_type tmp_SA_pop_count;
+
 
 	l = sp;
 
 
-	actually_line
-		= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+	actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
 
-	last = l % compress_SA_flag;
+	///这里SA要改
+	///last = l % compress_SA_flag;
+	last = l % compress_SA_flag + SA_counter_length;
 
-	ans = SA_flag[actually_line];
+	///这里SA要改
+	///ans = SA_flag[actually_line];
+	ans = SA_flag[actually_line] >> SA_counter_shift_length;
 
 
-	if (last != 0)
+	///这里SA要改
+	/**
+	if (last != SA_counter_length)
 	{
 		actually_line++;
 
@@ -3033,6 +3736,44 @@ void direct_get_sa_interval_long
 
 
 	}
+	**/
+	if (last != 0)
+	{
+		///主要last本身已经加过SA_counter_length了，所以这里j=0；否则就应该把j = SA_counter_length
+		unsigned int j = 0;
+		
+		tmp_SA_pop_count = SA_flag[actually_line] & SA_pop_count_mode;
+
+
+
+
+		while (j + SA_flag_warp_number <= last)
+		{
+
+			ans = ans + __builtin_popcountll(tmp_SA_pop_count);
+
+			j = j + SA_flag_warp_number;
+
+			actually_line++;
+			tmp_SA_pop_count = SA_flag[actually_line];
+
+		}
+
+
+		last = last - j;
+
+
+		if (last != 0)
+		{
+			ans = ans +
+				__builtin_popcountll((SA_flag_string_type)(tmp_SA_pop_count
+				& (mode << (SA_flag_warp_number - last))));
+		}
+
+
+	}
+
+
 
 
 	(*start) = ans;
@@ -3056,7 +3797,7 @@ void direct_get_sa_interval_long
 
 	l = ep;
 
-
+	/**
 	actually_line
 		= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
 
@@ -3105,6 +3846,105 @@ void direct_get_sa_interval_long
 			////mode << (SA_flag_warp_number - last);
 			ans = ans +
 				__builtin_popcount((SA_flag_string_type)(SA_flag[actually_line++]
+				& (mode << (SA_flag_warp_number - last))));
+		}
+
+
+	}
+	**/
+
+
+
+	actually_line = ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number;
+
+	///这里SA要改
+	///last = l % compress_SA_flag;
+	last = l % compress_SA_flag + SA_counter_length;
+
+	///这里SA要改
+	///ans = SA_flag[actually_line];
+	ans = SA_flag[actually_line] >> SA_counter_shift_length;
+
+
+	///这里SA要改
+	/**
+	if (last != SA_counter_length)
+	{
+	actually_line++;
+
+	unsigned int j = 0;
+
+
+
+
+	///while (j + SA_flag_warp_number <= last)
+	while (j + 64 <= last)
+	{
+	tmp_SA_flag = (uint64_t)0;
+	tmp_SA_flag = SA_flag[actually_line++];
+	tmp_SA_flag = tmp_SA_flag << SA_flag_warp_number;
+	tmp_SA_flag = tmp_SA_flag | SA_flag[actually_line++];
+	ans = ans + __builtin_popcountll(tmp_SA_flag);
+
+	j = j + 64;
+
+	}
+
+
+	while (j + SA_flag_warp_number <= last)
+	{
+
+	ans = ans + __builtin_popcount(SA_flag[actually_line++]);
+
+	j = j + SA_flag_warp_number;
+
+	}
+
+
+	last = last - j;
+
+
+	if (last != 0)
+	{
+	///mode << (SA_flag_warp_number - last);
+	ans = ans +
+	__builtin_popcount((SA_flag_string_type)(SA_flag[actually_line++]
+	& (mode << (SA_flag_warp_number - last))));
+	}
+
+
+	}
+	**/
+	if (last != 0)
+	{
+		///主要last本身已经加过SA_counter_length了，所以这里j=0；否则就应该把j = SA_counter_length
+		unsigned int j = 0;
+
+		tmp_SA_pop_count = SA_flag[actually_line] & SA_pop_count_mode;
+
+
+
+
+		while (j + SA_flag_warp_number <= last)
+		{
+
+			ans = ans + __builtin_popcountll(tmp_SA_pop_count);
+
+			j = j + SA_flag_warp_number;
+
+			actually_line++;
+			tmp_SA_pop_count = SA_flag[actually_line];
+
+		}
+
+
+		last = last - j;
+
+
+		if (last != 0)
+		{
+			ans = ans +
+				__builtin_popcountll((SA_flag_string_type)(tmp_SA_pop_count
 				& (mode << (SA_flag_warp_number - last))));
 		}
 
@@ -3514,7 +4354,7 @@ void accesss_SA(unsigned int *sa, SA_flag_string_type* SA_flag, unsigned int* lo
 
 	if (ep - sp>1)
 	{
-
+		///这里SA要改
 		direct_get_sa_interval_long(SA_flag, sp, ep, &SA_start, &SA_length);
 
 
@@ -3527,6 +4367,7 @@ void accesss_SA(unsigned int *sa, SA_flag_string_type* SA_flag, unsigned int* lo
 	}
 	else if (ep - sp == 1)
 	{
+		///这里SA要改
 		if (get_sa_restrict_zero_steps(SA_flag,
 			sa, sp, (&(locates[(*tmp_SA_length)]))) == 1)
 		{
@@ -3539,8 +4380,293 @@ void accesss_SA(unsigned int *sa, SA_flag_string_type* SA_flag, unsigned int* lo
 }
 
 
+void accesss_pre_SA_debug(unsigned int *sa, SA_flag_string_type* SA_flag, unsigned int* locates,
+	unsigned int sp, unsigned int ep,
+	unsigned int* tmp_SA_length, unsigned int delta, bwt_string_type *bwt)
+{
+	unsigned int SA_start, SA_length, t, tmp_SA, tmp_SA_tail, aviable_BWT_single;
 
-void accesss_SA_cur(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_type *bwt,
+	unsigned int* aviable_BWT_index = NULL;
+
+	unsigned int actually_line, l, last, aviable_BWT_index_i = 0;
+	bwt_string_type tmp_delta;
+
+	if (ep - sp>1)
+	{
+
+		direct_get_sa_interval_long(SA_flag, sp, ep, &SA_start, &SA_length);
+
+
+		///aviable_BWT_index = (unsigned int*)malloc(sizeof(unsigned int)*SA_length);
+
+		for (t = sp; t<ep; t++)
+		{
+			l = t;
+
+
+			actually_line
+				= ((l / compress_SA_flag)*acctuall_SA_flag_gap) / SA_flag_warp_number + 1;
+
+			last = l % compress_SA_flag;
+
+			actually_line = actually_line + last / SA_flag_warp_number;
+
+
+			if (((SA_flag[actually_line] << (last % SA_flag_warp_number))&mode_SA_flag) == 1)
+			{
+				actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 64;
+
+				tmp_delta = (bwt[actually_line / bwt_warp_number]
+					>> ((bwt_warp_number - actually_line%bwt_warp_number - 1) * 2))
+					&(bwt_string_type)3;
+
+
+				if (tmp_delta == delta)
+				{
+					tmp_SA = sa[aviable_BWT_index_i + SA_start];
+
+					tmp_SA_tail = (tmp_SA & SA_header_mode)*compress_sa;
+
+					if (tmp_SA_tail != 0)
+					{
+						locates[(*tmp_SA_length)++] = tmp_SA_tail - 1;
+					}
+				}
+
+				aviable_BWT_index_i++;
+				
+			}
+		}
+
+
+
+		/**
+		for (t = 0; t<SA_length; t++)
+		{
+			tmp_SA = sa[t + SA_start];
+			tmp_SA_tail = (tmp_SA & SA_header_mode)*compress_sa;
+
+
+
+			if (tmp_SA_tail != 0 &&
+				((SA_header_mode_reverse&tmp_SA) >> 30) == delta)
+			{
+				locates[(*tmp_SA_length)++] = tmp_SA_tail - 1;
+			}
+
+
+			///locates[(*tmp_SA_length)++] = sa[t + SA_start] & SA_header_mode - 1;
+
+		}
+
+
+		free(aviable_BWT_index);
+		**/
+	}
+	else if (ep - sp == 1)
+	{
+
+
+		
+
+
+		if (get_sa_restrict_zero_steps(SA_flag,
+			sa, sp, (&(locates[(*tmp_SA_length)]))) == 1)
+		{
+
+
+
+			l = sp;
+
+			actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 64;
+
+			tmp_delta = (bwt[actually_line / bwt_warp_number]
+				>> ((bwt_warp_number - actually_line%bwt_warp_number - 1) * 2))
+				&(bwt_string_type)3;
+
+
+			if (tmp_delta == delta)
+			{
+
+				/**
+				tmp_SA = sa[aviable_BWT_index_i + SA_start];
+
+				tmp_SA_tail = (tmp_SA & SA_header_mode)*compress_sa;
+
+				**/
+
+				tmp_SA = locates[(*tmp_SA_length)];
+				tmp_SA_tail = (tmp_SA & SA_header_mode)*compress_sa;
+
+
+				if (tmp_SA_tail != 0)
+				{
+					locates[(*tmp_SA_length)] = tmp_SA_tail - 1;
+					(*tmp_SA_length)++;
+				}
+			}
+
+
+
+			/**
+			tmp_SA = locates[(*tmp_SA_length)];
+			tmp_SA_tail = (tmp_SA & SA_header_mode)*compress_sa;
+
+
+
+			if (tmp_SA_tail != 0 &&
+				((SA_header_mode_reverse&tmp_SA) >> 30) == delta)
+			{
+				locates[(*tmp_SA_length)] = tmp_SA_tail - 1;
+				(*tmp_SA_length)++;
+			}
+			**/
+
+
+			///locates[(*tmp_SA_length)] = locates[(*tmp_SA_length)] & SA_header_mode - 1;
+			///(*tmp_SA_length)++;
+
+		}
+	}
+
+}
+
+
+
+
+void accesss_pre_SA(unsigned int *sa, SA_flag_string_type* SA_flag, unsigned int* locates,
+	unsigned int sp, unsigned int ep,
+	unsigned int* tmp_SA_length, unsigned int delta)
+{
+	unsigned int SA_start, SA_length, t, tmp_SA, tmp_SA_tail;
+
+	if (ep - sp>1)
+	{
+		///这里SA要改
+		direct_get_sa_interval_long(SA_flag, sp, ep, &SA_start, &SA_length);
+
+
+
+
+		for (t = 0; t<SA_length; t++)
+		{
+			tmp_SA = sa[t + SA_start];
+			tmp_SA_tail = (tmp_SA & SA_header_mode)*compress_sa;
+
+
+
+			if (tmp_SA_tail != 0&&
+				((SA_header_mode_reverse&tmp_SA) >> 30) == delta)
+			{
+				locates[(*tmp_SA_length)++] = tmp_SA_tail - 1;
+			}
+
+				
+			///locates[(*tmp_SA_length)++] = sa[t + SA_start] & SA_header_mode - 1;
+			
+		}
+	}
+	else if (ep - sp == 1)
+	{
+
+
+
+
+		///这里SA要改
+		if (get_sa_restrict_zero_steps(SA_flag,
+			sa, sp, (&(locates[(*tmp_SA_length)]))) == 1)
+		{
+
+
+			tmp_SA = locates[(*tmp_SA_length)];
+			tmp_SA_tail = (tmp_SA & SA_header_mode)*compress_sa;
+
+
+
+			if (tmp_SA_tail != 0 &&
+				((SA_header_mode_reverse&tmp_SA) >> 30) == delta)
+			{
+				locates[(*tmp_SA_length)] = tmp_SA_tail - 1;
+				(*tmp_SA_length)++;
+			}
+
+
+
+			///locates[(*tmp_SA_length)] = locates[(*tmp_SA_length)] & SA_header_mode - 1;
+			///(*tmp_SA_length)++;
+
+		}
+	}
+
+}
+
+
+
+void accesss_SA_more_than_3(unsigned int *sa, SA_flag_string_type* SA_flag, unsigned int* locates,
+	unsigned int sp, unsigned int ep, unsigned int occ,
+	unsigned int* tmp_SA_length)
+{
+	unsigned int SA_start, SA_length, t;
+
+	if (ep - sp>1)
+	{
+
+
+		///这里SA要改
+		direct_get_sa_interval_long(SA_flag, sp, ep, &SA_start, &SA_length);
+
+
+
+
+		for (t = 0; t<SA_length; t++)
+		{
+			locates[(*tmp_SA_length)++] = (sa[t + SA_start] & SA_header_mode)*compress_sa + occ;
+		}
+	}
+	else if (ep - sp == 1)
+	{
+		///这里SA要改
+		if (get_sa_restrict_zero_steps_more_than_3(SA_flag,
+			sa, sp, (&(locates[(*tmp_SA_length)]))) == 1)
+		{
+			locates[(*tmp_SA_length)] = locates[(*tmp_SA_length)] + occ;
+			(*tmp_SA_length)++;
+
+		}
+
+	}
+
+}
+
+
+
+
+
+
+void accesss_SA_cur_more_than_3(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_type *bwt, high_occ_table_type* high_occ_table,
+	unsigned int* locates,
+	unsigned int sp, unsigned int ep, unsigned int occ,
+	unsigned int* tmp_SA_length, unsigned int need_step)
+{
+
+	unsigned int t;
+	for (t = sp; t<ep; t++)
+	{
+		///这里SA要改
+		if (get_sa_restrict_steps_more_than_3(SA_flag, t, bwt, high_occ_table, sa,
+			need_step, (&(locates[(*tmp_SA_length)]))) == 1)
+		{
+			locates[(*tmp_SA_length)] = locates[(*tmp_SA_length)] + occ;
+			(*tmp_SA_length)++;
+		}
+
+	}
+
+}
+
+
+
+void accesss_SA_cur(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_type *bwt, high_occ_table_type* high_occ_table,
 	unsigned int* locates,
 	unsigned int sp, unsigned int ep, unsigned int occ,
 	unsigned int* tmp_SA_length, unsigned int need_step)
@@ -3550,7 +4676,8 @@ void accesss_SA_cur(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_t
 	for (t = sp; t<ep; t++)
 	{
 
-		if (get_sa_restrict_steps(SA_flag, t, bwt, sa,
+		///这里SA要改
+		if (get_sa_restrict_steps(SA_flag, t, bwt, high_occ_table, sa,
 			need_step, (&(locates[(*tmp_SA_length)]))) == 1)
 		{
 
@@ -3578,7 +4705,464 @@ int unsigned_int_compareEntrySize(const void *a, const void *b) {
 
 
 
-void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_type *bwt, int na, int nc, int ng, int nt, int num_reads, FILE *f1)
+
+void search_from_bwt_more_than_3(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_type *bwt, high_occ_table_type* high_occ_table,
+	int na, int nc, int ng, int nt, int num_reads, FILE *f1)
+{
+	long long i, j;
+	FILE *fout;
+	int length_read;
+	char* reads;
+	int delta;
+	unsigned int top, bot, t;
+	unsigned int pre_top, pre_bot;
+	unsigned int top_A, top_C, top_G, top_T;
+	unsigned int bot_A, bot_C, bot_G, bot_T;
+
+	ctoi['A'] = 0;
+	ctoi['C'] = 1;
+	ctoi['G'] = 2;
+	ctoi['T'] = 3;
+
+
+
+	FILE* _ih_fp = fopen("patterns.txt", "r");
+
+	unsigned int numocc;
+	unsigned int query_length = 0;
+
+	fread(&(query_length), sizeof(unsigned int), 1, _ih_fp);
+	fread(&(numocc), sizeof(unsigned int), 1, _ih_fp);
+
+	fprintf(stdout, "query_length=%u\n", query_length);
+	fprintf(stdout, "numocc=%u\n", numocc);
+
+
+	char* patterns = (char *)malloc((query_length*numocc)*(sizeof(char)));
+
+	fread(patterns, sizeof(char), (query_length*numocc), _ih_fp);
+
+
+	reads = patterns;
+
+	reads = patterns;
+
+	length_read = query_length;
+
+	num_reads = numocc;
+
+	unsigned int* locates;
+
+	double start = clock();
+
+	double interval_start = clock();
+	double interval_time = 0;
+
+	double locate_start = clock();
+	double locate_time = 0;
+
+	long long number_of_locations = 0;
+
+	unsigned int SA_start;
+	unsigned int SA_length;
+	unsigned int total_top;
+	unsigned int total_bot;
+
+	unsigned int tmp_SA_length = 0;
+	unsigned int ijkijk = 0;
+
+	unsigned int tree_nodes_number = (pow(4, compress_sa) - 1) / 3;
+
+	fprintf(stdout, "tree_nodes_number=%llu\n", tree_nodes_number);
+
+	unsigned int* sp_tree = (unsigned int*)malloc(sizeof(unsigned int)* tree_nodes_number);
+	unsigned int* ep_tree = (unsigned int*)malloc(sizeof(unsigned int)* tree_nodes_number);
+	unsigned int tree_index = 0;
+	unsigned int tree_layer_length;
+	unsigned int tree_layers;
+	unsigned int tree_layers_i;
+
+	unsigned int rare_interval = 0;
+
+	unsigned int father_sp;
+	unsigned int father_ep;
+
+	unsigned int cut_thr = 1;
+	unsigned int need_step = 0;
+
+
+
+	double SA_flag_interval_length = 0;
+	double SA_flag_interval_length_optimal = 0;
+
+	long long number_of_hits = 0;
+
+	unsigned int occ;
+
+	unsigned int perform_interval = 0;
+
+
+	struct  timeval  start_timeval;
+	struct  timeval  end_timeval;
+	unsigned long timer;
+	gettimeofday(&start_timeval, NULL);
+
+	long long total_debug_number = 0;
+
+
+
+
+	for (i = 1; i <= num_reads; i++)
+	{
+
+		if (i % 10000 == 0)
+		{
+			fprintf(stdout, "i=%llu\n", i);
+		}
+
+
+
+
+
+		j = length_read - 1;
+		delta = ctoi[reads[j]];
+
+
+
+
+
+
+		top = nacgt[0][delta];
+		bot = nacgt[0][delta + 1];
+
+
+
+		for (j=j-1; j >= 1; j--)
+		{
+			delta = ctoi[reads[j]];
+			top = find_occ(top, delta, bwt,high_occ_table);
+			bot = find_occ(bot, delta, bwt, high_occ_table);
+		}
+
+
+
+		pre_top = top;
+		pre_bot = bot;
+
+
+		for (; j >= 0; j--)
+		{
+			delta = ctoi[reads[j]];
+			top = find_occ(top, delta, bwt, high_occ_table);
+			bot = find_occ(bot, delta, bwt, high_occ_table);
+		}
+
+
+
+		number_of_hits = bot - top;
+
+
+		///这个地方要删了
+		///total_debug_number = total_debug_number + number_of_hits;
+
+
+
+		
+
+
+		locates = (unsigned int *)malloc((bot - top)*sizeof(unsigned int));
+
+
+		total_top = top;
+		total_bot = bot;
+		tmp_SA_length = 0;
+		ijkijk = 0;
+
+
+		tree_index = 0;
+
+		sp_tree[tree_index] = top;
+		ep_tree[tree_index] = bot;
+		///SA_interval_tree_occ[tree_index] = 0;
+
+		tree_layers = 0;
+
+		need_step = compress_sa - tree_layers - 1;
+
+		occ = 0;
+
+		if (ep_tree[tree_index] - sp_tree[tree_index] <= cut_thr)
+		{
+			///这个函数内部要改
+			///这里SA要改
+			accesss_SA_cur_more_than_3(sa, SA_flag, bwt, high_occ_table, 
+				locates,
+				sp_tree[tree_index], ep_tree[tree_index], occ,
+				&tmp_SA_length, need_step);
+
+			sp_tree[tree_index] = ep_tree[tree_index] = (unsigned int)-1;
+		}
+		else
+		{
+		    ///这里不要改
+			///这里SA要改
+			accesss_SA_more_than_3(sa, SA_flag, locates,
+				sp_tree[tree_index], ep_tree[tree_index], occ,
+				&tmp_SA_length);
+		}
+
+
+
+		
+		if (length_read>=2&&
+			tmp_SA_length != number_of_hits)
+		{
+
+			delta = ctoi[reads[0]];
+
+			///这里不要改
+			///这里SA要改
+			accesss_pre_SA(sa, SA_flag, locates,
+				pre_top, pre_bot,
+				&tmp_SA_length,delta);
+			
+
+		}
+		
+
+
+
+
+
+		tree_layer_length = 1;
+
+
+
+
+
+
+
+		tree_layer_length = 1;
+
+		tree_index = 1;
+
+		//for (tree_layers = 1; tree_layers < compress_sa; tree_layers++)
+		for (tree_layers = 1; tree_layers < compress_sa - 1; tree_layers++)
+		{
+
+
+			if (tmp_SA_length == number_of_hits)
+			{
+				break;
+			}
+
+
+			//need_step = compress_sa - tree_layers - 1;
+			need_step = compress_sa - tree_layers - 2;
+
+			occ = tree_layers;
+
+
+			for (tree_layers_i = 0; tree_layers_i < tree_layer_length; tree_layers_i++)
+			{
+
+				father_sp = sp_tree[(tree_index - 1) / 4];
+				father_ep = ep_tree[(tree_index - 1) / 4];
+
+
+
+
+
+				if (father_sp == (unsigned int)-1)
+				{
+					sp_tree[tree_index] = sp_tree[tree_index + 1]
+						= sp_tree[tree_index + 2] = sp_tree[tree_index + 3]
+						= (unsigned int)-1;
+				}
+				else
+				{
+					///这里要改
+					find_occ_all_sp_ep_optimal(father_sp, father_ep, bwt, high_occ_table,
+						&sp_tree[tree_index], &sp_tree[tree_index + 1],
+						&sp_tree[tree_index + 2], &sp_tree[tree_index + 3],
+						&ep_tree[tree_index], &ep_tree[tree_index + 1],
+						&ep_tree[tree_index + 2], &ep_tree[tree_index + 3]);
+
+
+
+
+
+					if (ep_tree[tree_index] - sp_tree[tree_index] <= cut_thr)
+					{
+						///这里要改
+						accesss_SA_cur_more_than_3(sa, SA_flag, bwt, high_occ_table,
+							locates,
+							sp_tree[tree_index], ep_tree[tree_index], occ,
+							&tmp_SA_length, need_step);
+
+						sp_tree[tree_index] = ep_tree[tree_index] = (unsigned int)-1;
+					}
+					else
+					{
+						///这里不要改
+						accesss_SA_more_than_3(sa, SA_flag, locates,
+							sp_tree[tree_index], ep_tree[tree_index], occ,
+							&tmp_SA_length);
+					}
+
+
+					if (tmp_SA_length == number_of_hits)
+					{
+
+						break;
+					}
+
+
+					if (ep_tree[tree_index + 1] - sp_tree[tree_index + 1] <= cut_thr)
+					{
+
+						///这里要改
+						accesss_SA_cur_more_than_3(sa, SA_flag, bwt, high_occ_table,
+							locates,
+							sp_tree[tree_index + 1], ep_tree[tree_index + 1], occ,
+							&tmp_SA_length, need_step);
+
+						sp_tree[tree_index + 1] = ep_tree[tree_index + 1] = (unsigned int)-1;
+					}
+					else
+					{
+						///这里不要改
+						accesss_SA_more_than_3(sa, SA_flag, locates,
+							sp_tree[tree_index + 1], ep_tree[tree_index + 1], occ,
+							&tmp_SA_length);
+					}
+
+
+					if (tmp_SA_length == number_of_hits)
+					{
+						break;
+					}
+
+
+					if (ep_tree[tree_index + 2] - sp_tree[tree_index + 2] <= cut_thr)
+					{
+
+						///这里要改
+						accesss_SA_cur_more_than_3(sa, SA_flag, bwt, high_occ_table,
+							locates,
+							sp_tree[tree_index + 2], ep_tree[tree_index + 2], occ,
+							&tmp_SA_length, need_step);
+
+						sp_tree[tree_index + 2] = ep_tree[tree_index + 2] = (unsigned int)-1;
+					}
+					else
+					{
+						///这里不要改
+						accesss_SA_more_than_3(sa, SA_flag, locates,
+							sp_tree[tree_index + 2], ep_tree[tree_index + 2], occ,
+							&tmp_SA_length);
+					}
+
+
+					if (tmp_SA_length == number_of_hits)
+					{
+						break;
+					}
+
+					if (ep_tree[tree_index + 3] - sp_tree[tree_index + 3] <= cut_thr)
+					{
+
+						///这里要改
+						accesss_SA_cur_more_than_3(sa, SA_flag, bwt, high_occ_table,
+							locates,
+							sp_tree[tree_index + 3], ep_tree[tree_index + 3], occ,
+							&tmp_SA_length, need_step);
+
+						sp_tree[tree_index + 3] = ep_tree[tree_index + 3] = (unsigned int)-1;
+					}
+					else
+					{
+						///这里不要改
+						accesss_SA_more_than_3(sa, SA_flag, locates,
+							sp_tree[tree_index + 3], ep_tree[tree_index + 3], occ,
+							&tmp_SA_length);
+					}
+
+
+					if (tmp_SA_length == number_of_hits)
+					{
+						break;
+					}
+
+				}
+
+				tree_index = tree_index + 4;
+			}
+
+			tree_layer_length = tree_layer_length * 4;
+		}
+
+
+		
+	/**	
+		qsort(locates, tmp_SA_length, sizeof(unsigned int), unsigned_int_compareEntrySize);
+
+		for (t = 0; t<tmp_SA_length; t++)
+		{
+
+			fprintf(stderr, "i=%llu, site=%u\n", i, locates[t]);
+			fflush(stderr);
+		}
+		
+	**/	
+
+
+
+		free(locates);
+
+
+
+		number_of_locations = number_of_locations + tmp_SA_length;
+
+		
+
+
+		reads = reads + length_read;
+
+	}
+
+	gettimeofday(&end_timeval, NULL);
+	timer = 1000000 * (end_timeval.tv_sec - start_timeval.tv_sec) + end_timeval.tv_usec - start_timeval.tv_usec;
+
+
+	double finish = clock();
+	double duration = (double)(finish - start) / CLOCKS_PER_SEC;
+
+
+	fprintf(stdout, "\n\n\n*********************Result*********************\n");
+
+
+	fprintf(stdout, "searching Time: %ld microsecond\n", timer);
+
+	fprintf(stdout, "searching Time: %5.3f seconds\n", duration);
+
+	fprintf(stdout, "number of matched locations=%ld\n", number_of_locations);
+
+
+	fprintf(stdout, "************************************************\n");
+
+	///fprintf(stdout, "total_debug_number=%ld\n", total_debug_number);
+	
+
+
+}
+
+
+
+
+
+
+void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_type *bwt, high_occ_table_type* high_occ_table, int na, int nc, int ng, int nt, int num_reads, FILE *f1)
 {
 	long long i, j;
 	FILE *fout;
@@ -3708,8 +5292,8 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 		for (; j >= 0; j--)
 		{
 			delta = ctoi[reads[j]];
-			top = find_occ(top, delta, bwt);
-			bot = find_occ(bot, delta, bwt);
+			top = find_occ(top, delta, bwt, high_occ_table);
+			bot = find_occ(bot, delta, bwt, high_occ_table);
 		}
 
 
@@ -3739,7 +5323,8 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 
 		if (ep_tree[tree_index] - sp_tree[tree_index] <= cut_thr)
 		{
-			accesss_SA_cur(sa, SA_flag, bwt,
+			///这里SA要改
+			accesss_SA_cur(sa, SA_flag, bwt, high_occ_table,
 				locates,
 				sp_tree[tree_index], ep_tree[tree_index], occ,
 				&tmp_SA_length, need_step);
@@ -3748,6 +5333,7 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 		}
 		else
 		{
+			///这里SA要改
 			accesss_SA(sa, SA_flag, locates,
 				sp_tree[tree_index], ep_tree[tree_index], occ,
 				&tmp_SA_length);
@@ -3802,7 +5388,7 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 				}
 				else
 				{
-					find_occ_all_sp_ep_optimal(father_sp, father_ep, bwt,
+					find_occ_all_sp_ep_optimal(father_sp, father_ep, bwt, high_occ_table,
 						&sp_tree[tree_index], &sp_tree[tree_index + 1],
 						&sp_tree[tree_index + 2], &sp_tree[tree_index + 3],
 						&ep_tree[tree_index], &ep_tree[tree_index + 1],
@@ -3814,7 +5400,7 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 
 					if (ep_tree[tree_index] - sp_tree[tree_index] <= cut_thr)
 					{
-						accesss_SA_cur(sa, SA_flag, bwt,
+						accesss_SA_cur(sa, SA_flag, bwt, high_occ_table,
 							locates,
 							sp_tree[tree_index], ep_tree[tree_index], occ,
 							&tmp_SA_length, need_step);
@@ -3838,7 +5424,7 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 
 					if (ep_tree[tree_index+1] - sp_tree[tree_index+1] <= cut_thr)
 					{
-						accesss_SA_cur(sa, SA_flag, bwt,
+						accesss_SA_cur(sa, SA_flag, bwt, high_occ_table,
 							locates,
 							sp_tree[tree_index+1], ep_tree[tree_index+1], occ,
 							&tmp_SA_length, need_step);
@@ -3861,7 +5447,7 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 
 					if (ep_tree[tree_index+2] - sp_tree[tree_index+2] <= cut_thr)
 					{
-						accesss_SA_cur(sa, SA_flag, bwt,
+						accesss_SA_cur(sa, SA_flag, bwt, high_occ_table,
 							locates,
 							sp_tree[tree_index+2], ep_tree[tree_index+2], occ,
 							&tmp_SA_length, need_step);
@@ -3883,7 +5469,7 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 
 					if (ep_tree[tree_index+3] - sp_tree[tree_index+3] <= cut_thr)
 					{
-						accesss_SA_cur(sa, SA_flag, bwt,
+						accesss_SA_cur(sa, SA_flag, bwt, high_occ_table,
 							locates,
 							sp_tree[tree_index+3], ep_tree[tree_index+3], occ,
 							&tmp_SA_length, need_step);
@@ -3917,10 +5503,11 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 		for (t = 0; t<tmp_SA_length; t++)
 		{
 
-			fprintf(stdout, "i=%llu, site=%u\n", i, locates[t]);
-			fflush(stdout);
+			fprintf(stderr, "i=%llu, site=%u\n", i, locates[t]);
+			fflush(stderr);
 		}
 		**/
+		
 		
 		
 
@@ -3983,7 +5570,7 @@ int search_bwt()
 	u_int8_t xx;
 	struct timeval tv_begin, tv_end;
 
-	FILE *f1, *f2, *fs, *fb, *fout;
+	FILE *f1, *f2, *fs, *fb, *fout, *fo;
 
 
 	pop_count_mode[0] = (bwt_string_type)0;
@@ -4066,6 +5653,13 @@ int search_bwt()
 	fprintf(stdout, "\n*********************Warning*********************\n\n\n");
 
 
+	///这里要改
+	fo = fopen(filenameo, "r");
+	if (fo == NULL)
+	{
+		fprintf(stdout, "Failed to open %s! FMtree will exit ...\n", filenameo);
+		return 1;
+	}
 
 	fs = fopen(filenames, "r");
 	if (fs==NULL)
@@ -4105,9 +5699,14 @@ int search_bwt()
 
 	fread(&compress_sa, sizeof(unsigned int), 1, f2);
 	fread(&compress_occ, sizeof(unsigned int), 1, f2);
+	///这里要改
+	fread(&high_compress_occ, sizeof(unsigned int), 1, f2);
+
+	
 
 	fprintf(stdout, "compress_sa=%llu\n", compress_sa);
 	fprintf(stdout, "compress_occ=%llu\n", compress_occ);
+	fprintf(stdout, "high_compress_occ=%llu\n", high_compress_occ);
 
 
 
@@ -4152,11 +5751,33 @@ int search_bwt()
 	fread(SA_flag, sizeof(SA_flag_string_type), SA_flag_iterater, fs);
 
 
+
+	unsigned int high_occ_table_length = 0;
+	fread(&high_occ_table_length, sizeof(high_occ_table_length), 1, fo);
+	fprintf(stdout, "high_occ_table_length=%llu\n", high_occ_table_length);
+	high_occ_table_type* high_occ_table;
+	high_occ_table = (high_occ_table_type*)malloc(sizeof(high_occ_table_type)*high_occ_table_length);
+	fread(high_occ_table, sizeof(high_occ_table_type), high_occ_table_length, fo);
+
+	
+
+
 	fclose(f2);
 	fclose(fs);
 	fclose(fb);
+	fclose(fo);
 
-	search_from_bwt(sa, SA_flag, bwt, na, nc, ng, nt, num_reads, f1);
+
+	if (compress_sa >= 4)
+	{
+		search_from_bwt_more_than_3(sa, SA_flag, bwt, high_occ_table, na, nc, ng, nt, num_reads, f1);
+	}
+	else
+	{
+		search_from_bwt(sa, SA_flag, bwt, high_occ_table, na, nc, ng, nt, num_reads, f1);
+	}
+
+	
 
 	return 0;
 }
