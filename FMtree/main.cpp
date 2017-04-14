@@ -4811,7 +4811,6 @@ void search_from_bwt_more_than_3(unsigned int *sa, SA_flag_string_type* SA_flag,
 
 
 
-
 	for (i = 1; i <= num_reads; i++)
 	{
 
@@ -4836,12 +4835,22 @@ void search_from_bwt_more_than_3(unsigned int *sa, SA_flag_string_type* SA_flag,
 		bot = nacgt[0][delta + 1];
 
 
+		///is_exist = 1;
+
 
 		for (j=j-1; j >= 1; j--)
 		{
+			
 			delta = ctoi[reads[j]];
 			top = find_occ(top, delta, bwt,high_occ_table);
 			bot = find_occ(bot, delta, bwt, high_occ_table);
+
+
+			if (bot <= top)
+			{
+				break;
+			}
+
 		}
 
 
@@ -4852,10 +4861,30 @@ void search_from_bwt_more_than_3(unsigned int *sa, SA_flag_string_type* SA_flag,
 
 		for (; j >= 0; j--)
 		{
+			if (bot <= top)
+			{
+				break;
+			}
+
+
 			delta = ctoi[reads[j]];
 			top = find_occ(top, delta, bwt, high_occ_table);
 			bot = find_occ(bot, delta, bwt, high_occ_table);
+
+
+
+
 		}
+
+
+		if (bot <= top)
+		{
+			reads = reads + length_read;
+			continue;
+		}
+
+
+
 
 
 
