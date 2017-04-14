@@ -29,7 +29,7 @@ For FMtree, Original_s and Original_v:
 * For each method, first make it by giving the command 'make' to generate binary.
 
 * After that, build the index for the input text. For example, consider a text "human.fasta", its index consists of 
-"human.fasta.index", "human.fasta.index.bwt", "human.fasta.index.sa". `Please note that the input text can only include 
+"human.fasta.index", "human.fasta.index.bwt", "human.fasta.index.sa" and "human.fasta.index.occ". `Please note that the input text can only include 
 the characters which belong to {a, c, g, t, A, C, G, T}`.
 
 * When searching, the pattern must saved in "patterns.txt". `Like the text, patterns cannot includes any characters which 
