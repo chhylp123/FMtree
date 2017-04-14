@@ -2031,6 +2031,7 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 
 
 
+
 	for (i = 1; i <= num_reads; i++)
 	{
 		
@@ -2054,14 +2055,25 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 		j--;
 
 
+
 		for (; j >= 0; j--)
 		{
 			delta = ctoi[reads[j]];
 			top = find_occ(top, delta, bwt,high_occ_table);
 			bot = find_occ(bot, delta, bwt, high_occ_table);
+
+
+			if (bot <= top)
+			{
+				break;
+			}
 		}
 
-
+		if (bot <= top)
+		{
+			reads = reads + length_read;
+			continue;
+		}
 
 		
 		locates = (unsigned int *)malloc((bot - top)*sizeof(unsigned int));

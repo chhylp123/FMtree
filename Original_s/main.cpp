@@ -2136,8 +2136,21 @@ void search_from_bwt(unsigned int *sa, bwt_string_type *bwt, int na, int nc, int
 			delta = ctoi[reads[j]];
 			top = find_occ(top, delta, bwt, high_occ_table);
 			bot = find_occ(bot, delta, bwt, high_occ_table);
+
+
+			if (bot <= top)
+			{
+				break;
+			}
 		}
 
+
+
+		if (bot <= top)
+		{
+			reads = reads + length_read;
+			continue;
+		}
 
 
 
