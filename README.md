@@ -33,7 +33,7 @@ For FMtree, Original_s and Original_v:
 the characters which belong to {a, c, g, t, A, C, G, T}`.
 
 * When searching, the pattern must saved in "patterns.txt". `Like the text, patterns cannot includes any characters which 
-does not belong to {a, c, g, t, A, C, G, T}`. If some patterns consist of such characters, the results of FMtree will be incorrect. Users can randomly generate patterns using our programs, or generate by themselves.
+does not belong to {a, c, g, t, A, C, G, T}`. If some patterns consist of such characters, the results of FMtree will be incorrect. Users can randomly generate patterns using our programs (FMtree/Original_v/Original_s), or generate by themselves.
 
 For the program named "preprocess":
 
