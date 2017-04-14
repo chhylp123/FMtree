@@ -2050,6 +2050,10 @@ void search_from_bwt(unsigned int *sa, bwt_string_type *bwt, int na, int nc, int
 	ctoi['C'] = 1;
 	ctoi['G'] = 2;
 	ctoi['T'] = 3;
+	ctoi['a'] = 0;
+	ctoi['c'] = 1;
+	ctoi['g'] = 2;
+	ctoi['t'] = 3;
 
 
 	FILE* _ih_fp = fopen("patterns.txt", "r");

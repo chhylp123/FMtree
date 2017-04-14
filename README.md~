@@ -38,7 +38,7 @@ does not belong to {a, c, g, t, A, C, G, T}`. If some patterns consist of such c
 For the program named "preprocess":
 
 
-* This program is used to preprocess the text (genome). By utilizing this program, any character which does not belong {a, c, g, t, A, C, G, T} is randomly converted to one of {a, c, g, t, A, C, G, T}. The output text will only consists of the sequence of genome. Other information, like chrome names and chrome length will be removed. Note that the input text (genome) must be formated using .fa or .fasta format.
+* This program is used to preprocess the text (genome). By utilizing this program, any character which does not belong {a, c, g, t, A, C, G, T} is randomly converted to one of {a, c, g, t, A, C, G, T}. The output text will only consists of the sequence of genome. Other information, like chrome names and chrome length will be removed.
 
 
 * Usage: ./preprocess --index input_text (Note that the output text will be saved in input_text.not_N).

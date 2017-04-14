@@ -1965,6 +1965,10 @@ void search_from_bwt(unsigned int *sa, SA_flag_string_type* SA_flag, bwt_string_
 	ctoi['C'] = 1;
 	ctoi['G'] = 2;
 	ctoi['T'] = 3;
+	ctoi['a'] = 0;
+	ctoi['c'] = 1;
+	ctoi['g'] = 2;
+	ctoi['t'] = 3;
 
 
 
