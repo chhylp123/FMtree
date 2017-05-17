@@ -50,6 +50,7 @@ Note
 -------
 * We adopt the SACA-K algorithm [1] to build the suffix array, and build BWT from suffix array. As such when building the index, the memory requirement of FMtree, Original_s and Original_v is about 5 times larger than that of the input text.
 
+* Please note that FMtree, Original_s and Original_v do not share a same index. For each method, users should build its own index.
 
 References
 -------
