@@ -38,6 +38,8 @@ does not belong to {a, c, g, t, A, C, G, T}`. If some patterns consist of such c
 
      ![example1](https://github.com/chhylp123/FMtree/raw/master/example1.png) 
 
+    Users can input 1, 2 and 3 to build index, search patterns and generate random patterns, respectively. 
+
 
 For the program named "preprocess":
 
