@@ -35,11 +35,6 @@ the characters which belong to {a, c, g, t, A, C, G, T}`.
 does not belong to {a, c, g, t, A, C, G, T}`. If some patterns consist of such characters, the results of FMtree would be incorrect. Users can randomly generate patterns using our programs (FMtree/Original_v/Original_s), or generate by themselves.
 
 *Example: If users want to run FMtree, they should first type "./FMtree". Then FMtree will report the following information:
-         input mode:
-         1 for index
-         2 for search
-         3 make patterns:
-         Users can input 1, 2 and 3 to build index, search patterns and generate random patterns, respectively.
 
 
 For the program named "preprocess":
