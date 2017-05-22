@@ -36,7 +36,7 @@ does not belong to {a, c, g, t, A, C, G, T}`. If some patterns consist of such c
 
 *Example: If users want to run FMtree, they should first type "./FMtree". Then FMtree will report the following information:
 
-![Aaron Swartz](https://github.com/younghz/Markdown/raw/master/resource/Aaron_Swartz.jpg) 
+![example1](https://github.com/chhylp123/FMtree/raw/master/example1.png) 
 
 
 For the program named "preprocess":
