@@ -34,7 +34,7 @@ the characters which belong to {a, c, g, t, A, C, G, T}`.
 * When searching, the pattern must be saved in "patterns.txt". `Like the text, patterns cannot includes any character which 
 does not belong to {a, c, g, t, A, C, G, T}`. If some patterns consist of such characters, the results of FMtree would be incorrect. Users can randomly generate patterns using our programs (FMtree/Original_v/Original_s), or generate by themselves.
 
-*Example: If users want to run FMtree, they should first type "./FMtree". Then FMtree will report the following information:
+* Example: If users want to run FMtree, they should first type "./FMtree". Then FMtree will report the following information:
 
 ![example1](https://github.com/chhylp123/FMtree/raw/master/example1.png) 
 
