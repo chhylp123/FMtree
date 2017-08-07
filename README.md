@@ -58,9 +58,7 @@ To use the FMtree library, you should first include "FMtree/bwt.h" in your proje
 
 There are several functions you can call when using FMtree:
 
-- **build**: Create FM-index with sampling distance compress_sa from *input_refer[0..text_length-1]. The index will be saved in "filename.index", "filename.index.bwt", "filename.index.sa" and "filename.index.occ".
-```
-unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_refer, unsigned int compress_sa, char* filename);
+- **build**: Create FM-index with sampling distance `compress_sa` from (`*input_refer`)[0..`text_length`-1]. The index will be saved in "`filename`.index", "`filename`.index.bwt", "`filename`.index.sa" and "`filename`.index.occ".
 
 ```
 
