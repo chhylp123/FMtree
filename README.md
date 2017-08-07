@@ -54,7 +54,7 @@ For the program named "preprocess":
 
 API
 -------
-* To use the FMtree library, you should include "FMtree/bwt.h" in your project.
+* To use the FMtree library, you should first include "FMtree/bwt.h" in your project. After that, compile it with " -O3 -mpopcnt" options and link it with "FMtree/saca-k.cpp" and "FMtree/bwt.cpp".
 
 Note
 -------
