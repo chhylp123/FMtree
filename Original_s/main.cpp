@@ -12,6 +12,7 @@
 #include <time.h>
 #include<stdint.h>
 #include<ctype.h>
+#include "bwt.h"
 
 
 
@@ -19,7 +20,6 @@
 
 
 
-typedef uint32_t SA_flag_string_type;
 
 
 ///这里要改
@@ -29,6 +29,7 @@ typedef uint64_t bwt_string_type;
 typedef uint32_t high_occ_table_type;
 ///typedef unsigned int bwt_string_type;
 unsigned int bwt_warp_number = sizeof(bwt_string_type)* 8 / 2;
+
 ///这里要改
 ///unsigned int single_occ_bwt = sizeof(bwt_string_type)/sizeof(unsigned);
 unsigned int single_occ_bwt = sizeof(bwt_string_type) / sizeof(unsigned short);
@@ -36,6 +37,8 @@ unsigned int single_occ_bwt = sizeof(bwt_string_type) / sizeof(unsigned short);
 unsigned int occ_words = 4 / single_occ_bwt;
 ///这里要改
 ///unsigned int acctuall_bwt_gap = compress_occ + sizeof(unsigned int)* 4 * 8 / 2;
+///256 + 2*4*8/2 = 256 + 32 
+///因为是256行字符 + 64 bit 的cout值 = 相当于288行字符 
 unsigned int acctuall_bwt_gap = compress_occ + sizeof(unsigned short)* 4 * 8 / 2;
 
 bwt_string_type mode_4[4];
@@ -44,6 +47,7 @@ bwt_string_type mode_16 = (bwt_string_type)65535;
 bwt_string_type mode_32 = ((bwt_string_type)-1)>>32;
 bwt_string_type mode_high;
 bwt_string_type mode_low;
+bwt_string_type mode_3 = (bwt_string_type)3;
 
 bwt_string_type pop_count_mode[4];
 unsigned int SA_flag_warp_number = sizeof(SA_flag_string_type)* 8;
@@ -413,79 +417,8 @@ void Generate_patterns() {
 
 
 
-int c0(unsigned int *r, unsigned int a, unsigned int b)
-{
-	return r[a] == r[b] && r[a + 1] == r[b + 1] && r[a + 2] == r[b + 2];
-}
-int c12(int k, unsigned int *r, unsigned int a, unsigned int b)
-{
-	if (k == 2) return r[a] < r[b] || r[a] == r[b] && c12(1, r, a + 1, b + 1);
-	else return r[a]<r[b] || r[a] == r[b] && wv[a + 1]<wv[b + 1];
-}
-void count_sort(unsigned int *r, unsigned int *a, unsigned int *b, unsigned int n, unsigned int m)
-{
-	int i;
-	for (i = 0; i<n; i++) wv[i] = r[a[i]];
-	for (i = 0; i<m; i++) wd[i] = 0;
-	//printf("%d %d\n",n,m);
-	for (i = 0; i<n; i++)
-	{
-
-		wd[wv[i]]++;
-	}
-	for (i = 1; i<m; i++) wd[i] += wd[i - 1];
-	for (i = n - 1; i >= 0; i--) b[--wd[wv[i]]] = a[i];
-
-	return;
-}
 
 
-
-void qquicksort(int l, int r, unsigned int *sa, char *refer)
-{
-	unsigned int x, y, i, j, t;
-	/*
-	printf("%s\n",refer);
-	for(t=0;t<cc;t++)
-	printf("%d ",sa[t]);
-	printf("\n");
-	*/
-	i = l;
-	j = r;
-	x = sa[(l + r) / 2];
-	do{
-		//printf("l:%d,r:%d,i:%d,j:%d\n",l,r,i,j);
-		while (strcmp(&refer[sa[i]], &refer[x])<0) i++;
-		while (strcmp(&refer[sa[j]], &refer[x])>0) j--;
-		if (i + 10 <= j + 10)
-		{
-			//printf("%d %d\n",i,j);
-			y = sa[i];
-			sa[i] = sa[j];
-			sa[j] = y;
-			//printf("%d %d\n",i,j);
-			i++;
-			j--;
-		}
-		//printf("l:%d,r:%d,i:%d,j:%d\n",l,r,i,j);
-	} while (i + 10 <= j + 10);
-
-	if (l + 10<j + 10) qquicksort(l, j, sa, refer);
-	if (i + 10<r + 10) qquicksort(i, r, sa, refer);
-}
-
-void put_sa_toFILE(unsigned int *sa, unsigned int cc)
-{
-	int64_t i;
-	FILE *fp;
-	fp = fopen("woyaosa", "w");
-	for (i = 0; i<cc; i++)
-	{
-		fprintf(fp, "%d\n", sa[i]);
-	}
-
-	fclose(fp);
-}
 
 void get_sa_fromFILE(unsigned int **sa, unsigned int cc, char *refer)
 {
@@ -551,93 +484,6 @@ void get_sa_fromFILE(unsigned int **sa, unsigned int cc, char *refer)
 }
 
 
-void loadRefGenome(char **refGen, _rg_name_l **refGenName, int* refChromeCont, unsigned int *refGenOff)
-{
-	char ch;
-	unsigned int _rg_contGen = 0;
-	unsigned int _rg_contChromeLength = 0;
-	int _rg_contChrome = 0;
-
-	(*refGen) = (char*)malloc(sizeof(char)*(*refGenOff));
-	*refGenName = (_rg_name_l*)malloc(sizeof(_rg_name_l)* 1);
-
-
-	while (fscanf(_rg_fp, "%c", &ch) > 0)
-	{
-
-
-		if (ch == '>')
-		{
-			fprintf(stdout, "%c\n", ch);
-			fflush(stdout);
-			_rg_name_l*  tmp_rg_name = (struct _rg_name_l*)malloc(sizeof(struct _rg_name_l)* (++_rg_contChrome));
-
-			int i = 0;
-
-			for (i = 0; i < (_rg_contChrome - 1); i++)
-			{
-				strcpy(tmp_rg_name[i]._rg_chrome_name, (*refGenName)[i]._rg_chrome_name);
-				tmp_rg_name[i]._rg_chrome_length = (*refGenName)[i]._rg_chrome_length;
-			}
-
-			char *tmp;
-			tmp = fgets(tmp_rg_name[_rg_contChrome - 1]._rg_chrome_name, SEQ_MAX_LENGTH, _rg_fp);
-			if ((_rg_contChrome - 2) >= 0)
-			{
-				tmp_rg_name[_rg_contChrome - 2]._rg_chrome_length = _rg_contChromeLength;
-			}
-			if (tmp == NULL)
-				fprintf(stdout, "Error reading the reference.\n");
-			free((*refGenName));
-			(*refGenName) = tmp_rg_name;
-			int k;
-			for (k = 0; k<strlen((*refGenName)[_rg_contChrome - 1]._rg_chrome_name); k++)
-			{
-				if ((*refGenName)[_rg_contChrome - 1]._rg_chrome_name[k] == ' ' || (*refGenName)[_rg_contChrome - 1]._rg_chrome_name[k] == '\n')
-				{
-					(*refGenName)[_rg_contChrome - 1]._rg_chrome_name[k] = '\0';
-					break;
-				}
-			}
-			fprintf(stdout, "Chrome Name =%s ********\n", (*refGenName)[_rg_contChrome - 1]._rg_chrome_name);
-			_rg_contChromeLength = 0;
-		}
-		else if (!isspace(ch) && (ch != '\n'))
-		{
-
-			ch = toupper(ch);
-			(*refGen)[_rg_contGen++] = ch;
-			_rg_contChromeLength++;
-		}
-	}
-
-
-
-
-	(*refGenName)[_rg_contChrome - 1]._rg_chrome_length = _rg_contChromeLength;
-
-	(*refGen)[_rg_contGen] = '\0';
-	*refChromeCont = _rg_contChrome;
-	*refGenOff = _rg_contGen;
-	fclose(_rg_fp);
-}
-
-
-
-unsigned int initLoadingRefGenome(char *fileName)
-{
-	_rg_fp = fopen(fileName, "r");
-
-	if (_rg_fp == NULL)
-	{
-		return 0;
-	}
-	unsigned int file_length = 0;
-	fseek(_rg_fp, 0, SEEK_END);
-	file_length = ftell(_rg_fp);
-	fseek(_rg_fp, 0, SEEK_SET);
-	return file_length;
-}
 
 
 
@@ -1677,383 +1523,20 @@ int build_index()
 }
 
 
-static inline int __occ_auxx(u_int64_t y, int c)
+
+
+void search_from_bwt()
 {
-	y = ((c & 2) ? y : ~y) >> 1 & ((c & 1) ? y : ~y) & 0x5555555555555555ull;
-	y = (y & 0x3333333333333333ull) + (y >> 2 & 0x3333333333333333ull);
-	return ((y + (y >> 4)) & 0xf0f0f0f0f0f0f0full) * 0x101010101010101ull >> 56;
-}
-
-static inline int __occ_aux(u_int64_t y, int c)
-{
-	y = y ^ cnt_aux[c];
-	y = (y >> 1) & y & 0x5555555555555555ull;
-	y = (y & 0x3333333333333333ull) + (y >> 2 & 0x3333333333333333ull);
-	return ((y + (y >> 4)) & 0xf0f0f0f0f0f0f0full) * 0x101010101010101ull >> 56;
-}
-
-unsigned int jhp_find_occ(unsigned int line, unsigned int *occ, int delta, bwt_string_type *bwt)
-{
-
-	unsigned int i;
-	unsigned int b;
-
-	unsigned int ans = nacgt[0][delta];
-
-
-    if(line%compress_occ==0) 
-		return ans + occ[(line / compress_occ) * 4 + delta];
-
-
-	ans += occ[(line / compress_occ) * 4 + delta];
-
-
-
-	for (i = (line / compress_occ)*compress_occ; i + 16<line; i = i + 16)
-	{
-		b = bwt[i / 16];
-		ans += (cnt_table[b & 0xffff][delta] + cnt_table[b >> 16 & 0xffff][delta]) & 0xffff;
-	}
-
-
-
-	b = bwt[i / 16] & ~((1ull << ((~(line - 1) & 15) << 1)) - 1);
-	ans += (cnt_table[b & 0xffff][delta] + cnt_table[b >> 16 & 0xffff][delta]) & 0xffff;
-	if (delta == 0) ans -= ~(line - 1) & 15;
-	if ((delta == 1) && (shapline >= (line / compress_occ)*compress_occ) && (shapline<line)) ans--;
-
-
-	return ans;
-}
-
-
-unsigned int find_occ(unsigned int line, int delta, bwt_string_type *bwt, high_occ_table_type* high_occ_table)
-{
-
-	///fprintf(stdout, "delta=%u\n", delta);
-	///fprintf(stdout, "line=%u\n", line);
-
-	//gettimeofday(&occ_tv_begin, NULL);
-	unsigned int i, j;
-	unsigned int b;
-
-	bwt_string_type ans = nacgt[0][delta];
-
-	///这里是增加的
-	ans = ans + high_occ_table[(line / high_compress_occ) * 4 + delta];
-
-	/**
-	fprintf(stdout, "delta=%llu\n",
-	delta);
-	fflush(stdout);
-
-
-	fprintf(stdout, "compress_occ=%llu, acctuall_bwt_gap=%llu, bwt_warp_number=%llu\n",
-	compress_occ, acctuall_bwt_gap, bwt_warp_number);
-	fflush(stdout);
-	**/
-
-	unsigned int actually_line = ((line / compress_occ)*acctuall_bwt_gap) / bwt_warp_number;
-
-	/**
-	fprintf(stdout, "actually_line=%llu, line=%llu\n", actually_line, line);
-	fflush(stdout);
-
-
-	fprintf(stdout, "ans=%llu\n", ans);
-	fflush(stdout);
-	**/
-
-	///这里要改
-	///ans += (bwt[actually_line + delta / single_occ_bwt] >> ((single_occ_bwt - 1 - delta%single_occ_bwt) * 32))&mode_32;
-	///single_occ_bwt=4
-	ans += (bwt[actually_line] >> ((single_occ_bwt - 1 - delta) * 16))&mode_16;
-
-	/**
-	fprintf(stdout, "bwt[actually_line + delta / single_occ_bwt]=%llu\n",
-	bwt[actually_line + delta / single_occ_bwt]);
-
-
-	dec_bit(bwt[actually_line + delta / single_occ_bwt]);
-
-	fprintf(stdout, "ans=%llu\n", ans);
-	fflush(stdout);
-	**/
-
-	///ans += occ[(line / compress_occ) * 4 + delta];
-
-
-	if (line%compress_occ == 0)
-		return ans;
-
-	unsigned int need_line = line % compress_occ;
-
-	actually_line = actually_line + 4 / single_occ_bwt;
-
-
-	bwt_string_type tmp_bwt;
-
-	bwt_string_type mode_low_2 = (bwt_string_type)3;
-
-
-	bwt_string_type P_A, P_B;
-
-
-	i = 0;
-
-	while (i + bwt_warp_number <= need_line)
-	{
-		P_A = bwt[actually_line++];
-		P_B = P_A^pop_count_mode[delta];
-		P_A = P_B >> 1;
-		P_A = P_A & P_B;
-		P_A = P_A & mode_low;
-
-		ans = ans + __builtin_popcountll(P_A);
-
-		i = i + bwt_warp_number;
-
-	}
-
-
-	need_line = need_line - i;
-
-
-	if (need_line != 0)
-	{
-
-
-
-		P_A = bwt[actually_line++];
-
-		P_B = mode << ((bwt_warp_number - need_line) * 2);
-
-		P_A = P_A & P_B;
-
-
-		if (delta == 0)
-		{
-			P_B = ~P_B;
-
-			P_A = P_A | P_B;
-		}
-
-
-		P_B = P_A^pop_count_mode[delta];
-		P_A = P_B >> 1;
-		P_A = P_A & P_B;
-		P_A = P_A & mode_low;
-
-
-		ans = ans + __builtin_popcountll(P_A);
-
-
-	}
-
-
-
-
-
-
-	/**
-	for (i = 0; i < need_line; i++)
-	{
-	tmp_bwt = (bwt[actually_line + i / bwt_warp_number] >>
-	((bwt_warp_number - (i % bwt_warp_number) - 1) * 2))&mode_low_2;
-
-	if (tmp_bwt == delta)
-	{
-	ans++;
-	}
-	}
-	**/
-
-
-
-
-
-
-
-
-
-	if ((delta == 1) && (shapline >= (line / compress_occ)*compress_occ) && (shapline<line))
-		ans--;
-
-	return ans;
-}
-
-
-
-/**
-unsigned int find_occ(unsigned int line, int delta, bwt_string_type *bwt)
-{
-
-
-	unsigned int i, j;
-	unsigned int b;
-
-	bwt_string_type ans = nacgt[0][delta];
-
-	unsigned int actually_line = ((line / compress_occ)*acctuall_bwt_gap) / bwt_warp_number;
-
-
-
-	ans += 
-		(bwt[actually_line + delta / single_occ_bwt] 
-		>> ((single_occ_bwt - 1 - delta%single_occ_bwt) * 32))&mode_32;
-
-
-
-	if (line%compress_occ == 0)
-		return ans;
-
-	unsigned int need_line = line % compress_occ;
-
-	actually_line = actually_line + 4 / single_occ_bwt;
-
-
-	bwt_string_type tmp_bwt;
-
-	bwt_string_type mode_low_2 = (bwt_string_type)3;
-
-	
-	bwt_string_type P_A, P_B;
-
-
-	i = 0;
-
-
-
-
-
-
-
-
-	while (i + bwt_warp_number <= need_line)
-	{
-		P_A = bwt[actually_line ++];
-		P_B = P_A^pop_count_mode[delta];
-		P_A = P_B >> 1;
-		P_A = P_A & P_B;
-		P_A = P_A & mode_low;
-
-		ans = ans + __builtin_popcountll(P_A);
-
-		i = i + bwt_warp_number;
-
-	}
-
-
-	need_line = need_line - i;
-
-
-	if (need_line!=0)
-	{
-
-
-
-		P_A = bwt[actually_line++];
-
-		P_B = mode << ((bwt_warp_number - need_line) * 2);
-
-		P_A = P_A & P_B;
-
-
-		if (delta==0)
-		{
-			P_B = ~P_B;
-
-			P_A = P_A | P_B;
-		}
-
-
-		P_B = P_A^pop_count_mode[delta];
-		P_A = P_B >> 1;
-		P_A = P_A & mode_low;
-		P_B = P_B & mode_low;
-		P_A = P_A & P_B;
-
-		ans = ans + __builtin_popcountll(P_A);
-
-
-	}
-
-
-
-	
-
-
-
-
-
-
-
-
-	if ((delta == 1) && (shapline >= (line / compress_occ)*compress_occ) && (shapline<line)) 
-		ans--;
-
-	return ans;
-}
-**/
-
-
-unsigned int get_sa(unsigned int line, bwt_string_type *bwt, unsigned int *sa, high_occ_table_type* high_occ_table)
-{
-	unsigned int l = line;
-	bwt_string_type delta;
-	unsigned int i = 0;
-
-	unsigned int actually_line;
-
-	if (line == shapline) return 0;
-	while ((l%compress_sa) != 0)
-	{
-		/**
-		actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 64;
-
-		delta = (bwt[actually_line / bwt_warp_number] 
-			>> ((bwt_warp_number - actually_line%bwt_warp_number - 1) * 2))
-			&(bwt_string_type)3;
-		**/
-
-
-		///似乎只有这里要改，因为这里涉及到取BWT了
-		///这里做了修改
-		///actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 64;
-		actually_line = ((l / compress_occ)*acctuall_bwt_gap) + l % compress_occ + 32;
-		delta = (bwt[actually_line / bwt_warp_number]
-			>> ((bwt_warp_number - actually_line%bwt_warp_number - 1) * 2))
-			&(bwt_string_type)3;
-
-
-		l = find_occ(l, delta, bwt, high_occ_table);
-
-
-		i++;
-		if (l == shapline) return i;
-	}
-
-	return sa[l / compress_sa] + i;
-}
-
-void search_from_bwt(unsigned int *sa, bwt_string_type *bwt, int na, int nc, int ng, int nt, int num_reads, FILE *f1,
-	high_occ_table_type* high_occ_table)
-{
-	long long i, j;
+	long long i, j, number_of_hits;
 	FILE *fout;
 	int length_read;
 	char* reads;
 	int delta;
 	unsigned int top, bot, t;
 
-	ctoi['A'] = 0;
-	ctoi['C'] = 1;
-	ctoi['G'] = 2;
-	ctoi['T'] = 3;
-	ctoi['a'] = 0;
-	ctoi['c'] = 1;
-	ctoi['g'] = 2;
-	ctoi['t'] = 3;
+
+
+
 
 
 	FILE* _ih_fp = fopen("patterns.txt", "r");
@@ -2090,7 +1573,7 @@ void search_from_bwt(unsigned int *sa, bwt_string_type *bwt, int na, int nc, int
 
 	length_read = query_length;
 
-	num_reads = numocc;
+	unsigned int num_reads = numocc;
 
 	unsigned int* locates;
 
@@ -2121,36 +1604,12 @@ void search_from_bwt(unsigned int *sa, bwt_string_type *bwt, int na, int nc, int
 		
 
 
-		j = length_read - 1;
-		delta = ctoi[reads[j]];
 
 
-		
+		number_of_hits
+			= count(reads, length_read, &top, &bot);
 
-		top = nacgt[0][delta];
-		bot = nacgt[0][delta + 1];
-
-
-
-		j--;
-
-
-		for (; j >= 0; j--)
-		{
-			delta = ctoi[reads[j]];
-			top = find_occ(top, delta, bwt, high_occ_table);
-			bot = find_occ(bot, delta, bwt, high_occ_table);
-
-
-			if (bot <= top)
-			{
-				break;
-			}
-		}
-
-
-
-		if (bot <= top)
+		if (number_of_hits == 0)
 		{
 			reads = reads + length_read;
 			continue;
@@ -2158,24 +1617,15 @@ void search_from_bwt(unsigned int *sa, bwt_string_type *bwt, int na, int nc, int
 
 
 
+
+
+
 		locates = (unsigned int *)malloc((bot - top)*sizeof(unsigned int));
+		locate(top, bot, locates);
 
 
 
-		
-		unsigned int ijkijk = 0;
-		for (t = top; t<bot; t++, ijkijk++)
-		{
-			locates[ijkijk] = get_sa(t, bwt, sa, high_occ_table);
-
-
-				
-			
-		}
-
-
-
-	/**	
+		/**
 		qsort(locates, bot - top, sizeof(unsigned int), unsigned_int_compareEntrySize);
 
 		for (t = 0; t<bot - top; t++)
@@ -2184,15 +1634,14 @@ void search_from_bwt(unsigned int *sa, bwt_string_type *bwt, int na, int nc, int
 			fprintf(stderr, "i=%llu, site=%u\n", i, locates[t]);
 			fflush(stderr);
 		}
+		**/
 		
+	
 
-	**/	
-
-		
 		free(locates);
 
 
-		number_of_locations = number_of_locations + (bot - top);
+		number_of_locations = number_of_locations + number_of_hits;
 
 		reads = reads + length_read;
 
@@ -2232,247 +1681,26 @@ int search_bwt()
 
 
 
-	char filename[100], filename1[100], filenames[100], filenameo[100], filenameb[100];
-	bwt_string_type *bwt;
-	unsigned int bwt_length;
-	unsigned int *sa;
-	unsigned int *occ_whole;
-	unsigned int tt;
-	int num_reads;
-	char ch;
-	long long i, j, t;
-	u_int32_t x;
-	u_int8_t xx;
-	struct timeval tv_begin, tv_end;
-
-
-	FILE *f1, *f2, *fs, *fb, *fout, *fo;
-	pop_count_mode[0] = (bwt_string_type)0;
-
-	for (i = 0; i < sizeof(bwt_string_type)*8 / 2; i++)
-	{
-		pop_count_mode[0] = (bwt_string_type)(pop_count_mode[0] << 2) | (bwt_string_type)3;
-	}
-
-
-	pop_count_mode[1] = (bwt_string_type)0;
-
-	for (i = 0; i < sizeof(bwt_string_type)* 8 / 2; i++)
-	{
-		pop_count_mode[1] = (bwt_string_type)(pop_count_mode[1] << 2) | (bwt_string_type)2;
-	}
-
-
-	pop_count_mode[2] = (bwt_string_type)0;
-
-	for (i = 0; i < sizeof(bwt_string_type)* 8 / 2; i++)
-	{
-		pop_count_mode[2] = (bwt_string_type)(pop_count_mode[2] << 2) | (bwt_string_type)1;
-	}
-
-	pop_count_mode[3] = (bwt_string_type)0;
-
-	for (i = 0; i < sizeof(bwt_string_type)* 8 / 2; i++)
-	{
-		pop_count_mode[3] = (bwt_string_type)(pop_count_mode[3] << 2) | (bwt_string_type)0;
-	}
-
-	/**
-	dec_bit(pop_count_mode[0]);
-	dec_bit(pop_count_mode[1]);
-	dec_bit(pop_count_mode[2]);
-	dec_bit(pop_count_mode[3]);
-	**/
-
-
-	mode_high=(bwt_string_type)0;
-	for (i = 0; i < sizeof(bwt_string_type)* 8 / 2; i++)
-	{
-		mode_high = (bwt_string_type)(mode_high << 2) | (bwt_string_type)2;
-	}
-
-
-	mode_low = (bwt_string_type)0;
-
-	for (i = 0; i < sizeof(bwt_string_type)* 8 / 2; i++)
-	{
-		mode_low = (bwt_string_type)(mode_low << 2) | (bwt_string_type)1;
-	}
-
-	/**
-	dec_bit(mode_high);
-	dec_bit(mode_low);
-
-	**/
-
-
-
-
-
-	///printf("input fa file name:\n");
+	char filename[100];
 	fprintf(stdout, "Please input the prefix of index name:\n");
 
 	scanf("%s", filename);
-	strcpy(filename + strlen(filename), ".index");
-	strcpy(filenames, filename);
-	strcpy(filenameo, filename);
-	strcpy(filenameb, filename);
-	strcpy(filenames + strlen(filename), ".sa");
-	strcpy(filenameo + strlen(filename), ".occ");
-	strcpy(filenameb + strlen(filename), ".bwt");
 
 
 
 
 
 
-	fprintf(stdout, "\n\n\n*********************Warning*********************\n\n");
 
 
-	fprintf(stdout, "All patterns in 'patterns.txt' cannot include the characters which do not belong {a,c, g, t, A, C, G, T}. \n");
-	fprintf(stdout, "If some patterns consist of such characters, the results of FMtree will be incorrect. \n");
+	load_index(filename);
 
 
-	fprintf(stdout, "\n*********************Warning*********************\n\n\n");
 
 
 
 
-	fo = fopen(filenameo, "r");
-	if (fo == NULL)
-	{
-		fprintf(stdout, "Failed to open %s! FMtree will exit ...\n", filenameo);
-		return 1;
-	}
-
-	fs = fopen(filenames, "r");
-	if (fs == NULL)
-	{
-		fprintf(stdout, "Failed to open %s! FMtree will exit ...\n", filenames);
-		return 1;
-	}
-	fb = fopen(filenameb, "r");
-	if (fb == NULL)
-	{
-		fprintf(stdout, "Failed to open %s! FMtree will exit ...\n", filenameb);
-		return 1;
-	}
-	strcpy(filename1, filename);
-	f2 = fopen(filename1, "r");
-
-	if (f2 == NULL)
-	{
-		fprintf(stdout, "Failed to open %s! FMtree will exit ...\n", filename1);
-		return 1;
-	}
-
-
-
-
-
-
-
-
-
-	fread(&SA_length, sizeof(SA_length), 1, f2);
-	fread(&shapline, sizeof(shapline), 1, f2);
-
-	fprintf(stdout, "shapline=%llu\n", shapline);
-
-
-
-
-	for (i = 0; i<bwt_step; i++)
-	{
-		for (j = 0; j <= (1 << (i + i + 2)); j++)
-			fread(&nacgt[i][j], sizeof(nacgt[i][j]), 1, f2);
-	}
-
-	fread(&compress_sa, sizeof(unsigned int), 1, f2);
-	fread(&compress_occ, sizeof(unsigned int), 1, f2);
-	fread(&high_compress_occ, sizeof(unsigned int), 1, f2);
-
-	fprintf(stdout, "compress_sa=%llu\n", compress_sa);
-	fprintf(stdout, "compress_occ=%llu\n", compress_occ);
-	fprintf(stdout, "high_compress_occ=%llu\n", high_compress_occ);
-
-
-
-	na = nacgt[0][0];
-	nc = nacgt[0][1];
-	ng = nacgt[0][2];
-	nt = nacgt[0][3];
-
-
-	unsigned int bwt_count_hash_length = pow(2, bwt_count_hash_table_bit);
-	for (i = 0; i < bwt_count_hash_length; ++i)
-	{
-		for (j = 0; j < 4; ++j)
-		{
-			x = ((((i >> 8) & 3) == j) 
-				+ (((i >> 10) & 3) == j) 
-				+ (((i >> 12) & 3) == j) 
-				+ (((i >> 14) & 3) == j) 
-				+ ((i & 3) == j) 
-				+ (((i >> 2) & 3) == j) 
-				+ (((i >> 4) & 3) == j) 
-				+ (((i >> 6) & 3) == j));
-			cnt_table[i][j] = x;
-		}
-	}
-
-	mode_4[0] = (bwt_string_type)-1;
-	mode_4[1] = (bwt_string_type)-1;
-	mode_4[2] = (bwt_string_type)-1;
-	mode_4[3] = (bwt_string_type)0;
-
-
-	fread(&bwt_length, sizeof(bwt_length), 1, fb);
-	bwt = (bwt_string_type *)malloc(sizeof(bwt_string_type)*bwt_length);
-	fread(bwt, sizeof(bwt_string_type), bwt_length, fb);
-	printf("BWT has been loaded!\n");
-
-
-	printf("SA_length=%u\n", SA_length);
-	unsigned int sparse_suffix_array_length = 0;
-	fread(&sparse_suffix_array_length, sizeof(sparse_suffix_array_length), 1, fs);
-	printf("sparse_suffix_array_length=%u\n", sparse_suffix_array_length);
-	sa = (unsigned int *)malloc(sizeof(unsigned int)*(sparse_suffix_array_length));
-	fread(sa, sizeof(unsigned int), sparse_suffix_array_length, fs);
-
-
-
-
-	unsigned int high_occ_table_length = 0;
-	fread(&high_occ_table_length, sizeof(high_occ_table_length), 1, fo);
-	fprintf(stdout, "high_occ_table_length=%llu\n", high_occ_table_length);
-	high_occ_table_type* high_occ_table;
-	high_occ_table = (high_occ_table_type*)malloc(sizeof(high_occ_table_type)*high_occ_table_length);
-	fread(high_occ_table, sizeof(high_occ_table_type), high_occ_table_length, fo);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-	fclose(f2);
-	fclose(fs);
-	fclose(fb);
-	fclose(fo);
-
-
-
-	search_from_bwt(sa, bwt, na, nc, ng, nt, num_reads, f1, high_occ_table);
+	search_from_bwt();
 
 	return 0;
 }

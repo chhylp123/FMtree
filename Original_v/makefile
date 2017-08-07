@@ -14,11 +14,11 @@ ALL_OPS = tryall core Makeours Clear
 ALL:$(ALL_OPS)
 
 core:
-	$(CC) -c saca-k.cpp $(CC_OPTION)
+	$(CC) -c saca-k.cpp bwt.cpp $(CC_OPTION)
 tryall:
 	$(CC) -c main.cpp $(CC_OPTION)
 Makeours:
-	$(CC) -o Original_v saca-k.o main.o  $(CC_OPTION)
+	$(CC) -o Original_v saca-k.o main.o bwt.o $(CC_OPTION)
 Clear:
 	rm *.o
      
