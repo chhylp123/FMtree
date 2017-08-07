@@ -74,8 +74,9 @@ unsigned int load_index(char* filename_prefix);
 ```
 
 
-- **count**: Get the result of count query of `pattern`[0..`length`-1]. Write `sp` and `ep` such that (`*sp`, `*ep`) is the SA range of `pattern`[0..`length`-1]. Besides, this function also writes `sp1` and `ep1` such that (`*sp1`, `*ep1`) is the SA range of `pattern`[1..`length`-1].
 
+
+- **count (when the sampling distance is at least 4)**: Get the result of count query of `pattern`[0..`length`-1]. The return value is the number of occurrences of `pattern`[0..`length`-1]. If `pattern`[0..`length`-1] is exist, write `sp` and `ep` such that [`sp`, `ep`) is the SA range of `pattern`[0..`length`-1]. Besides, if `pattern`[0..`length`-1] is exist, this function also writes `sp1` and `ep1` such that [`sp1`, `ep1`) is the SA range of `pattern`[1..`length`-1].
 
 ```
 inline unsigned int count(char* pattern, unsigned int length, unsigned int* sp, unsigned int* ep, unsigned int* sp1, unsigned int* ep1)
