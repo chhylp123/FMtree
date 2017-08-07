@@ -56,6 +56,43 @@ API
 -------
 * To use the FMtree library, you should first include "FMtree/bwt.h" in your project. After that, compile it with " -O3 -mpopcnt" options and link it with "FMtree/saca-k.cpp" and "FMtree/bwt.cpp".
 
+* There are several functions you can call when using FMtree:
+
+- **build** the index using text file called textFileName:
+```
+void build(const char *textFileName);
+```
+- **save** the index to file called fileName:
+```
+void save(const char *fileName);
+```
+- **load** the index from file called fileName:
+```
+void load(const char *fileName);
+```
+- **free** memory occupied by index:
+```
+void free();
+```
+- get the **index size** in bytes (size in memory):
+```
+unsigned long long getIndexSize();
+```
+- get the size in bytes of the text used to build the index:
+```
+unsigned int getTextSize();
+```
+- get the result of **count** query:
+```
+unsigned int count(unsigned char *pattern, unsigned int patternLen);
+```
+
+
+
+
+
+
+
 Note
 -------
 * We adopt the SACA-K algorithm [1] to build the suffix array, and build BWT from suffix array. As such when building the index, the memory requirement of FMtree, Original_s and Original_v is about 5 times larger than that of the input text.
