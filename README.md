@@ -52,6 +52,9 @@ For the program named "preprocess":
 * Example: ./preprocess --index human.fasta (the output text is saved in human.fasta.not_N).
 
 
+API
+-------
+
 
 Note
 -------
