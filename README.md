@@ -58,9 +58,9 @@ To use the FMtree library, you should first include "FMtree/bwt.h" in your proje
 
 There are several functions you can call when using FMtree:
 
-- **build** the index using text file called textFileName:
+- **build** the index:
 ```
-void build(const char *textFileName);
+unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_refer, unsigned int compress_sa, char* filename);
 ```
 - **save** the index to file called fileName:
 ```
