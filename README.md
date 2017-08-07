@@ -93,6 +93,23 @@ unsigned int locate(char* pattern, unsigned int sp, unsigned int ep,
 	unsigned int sp1, unsigned int ep1, unsigned int* locates, unsigned int length_read, unsigned int* occurrences);
 ```
 
+- **count (when the sampling distance is not more than 3)**: Get the result of count query of `pattern`[0..`length`-1]. The return value is the number of occurrences of `pattern`[0..`length`-1]. If `pattern`[0..`length`-1] is exist, write `sp` and `ep` such that [`sp`, `ep`) is the SA range of `pattern`[0..`length`-1].
+
+
+```
+inline unsigned int count_less_than_4(char* pattern, unsigned int length, unsigned int* sp, unsigned int* ep)
+```
+
+
+- **locate (when the sampling distance is not more than 3)**: Get the result of locate query of `pattern`[0..`length_read`-1]. [`sp`, `ep`) is the SA range of `pattern`[0..`length`-1], and [`sp1`, `ep1`) is the SA range of `pattern`[1..`length`-1]. The obtained positions of `pattern`[0..`length_read`-1] will be written into `locates`, and the number of obtained positions will be written into
+`occurrences`. Note that `locates` should be allocated and freed by users.
+
+```
+unsigned int locate_less_than_4(char* pattern, unsigned int sp, unsigned int ep, unsigned int sp1, unsigned int ep1, unsigned int* locates, unsigned int length_read, unsigned int* occurrences);
+```
+
+
+
 
 Note
 -------
