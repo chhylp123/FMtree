@@ -54,7 +54,7 @@ For the program named "preprocess":
 
 API
 -------
-
+* To use the FMtree library, you should include "FMtree/bwt.h" in your project.
 
 Note
 -------
