@@ -108,7 +108,7 @@ inline unsigned int count_less_than_4(char* pattern, unsigned int length, unsign
 unsigned int locate_less_than_4(char* pattern, unsigned int sp, unsigned int ep, unsigned int sp1, unsigned int ep1, unsigned int* locates, unsigned int length_read, unsigned int* occurrences);
 ```
 
-
+**A complete example can be found in "FMtree/main.cpp".**
 
 
 Note
