@@ -85,6 +85,13 @@ inline unsigned int count(char* pattern, unsigned int length, unsigned int* sp, 
 
 
 
+- **locate (when the sampling distance is at least 4)**: Get the result of locate query of `pattern`[0..`length_read`-1]. [`sp`, `ep`) is the SA range of `pattern`[0..`length`-1], and [`sp1`, `ep1`) is the SA range of `pattern`[1..`length`-1]. The obtained positions of `pattern`[0..`length_read`-1] will be written into `locates`, and the number of obtained positions will be written into
+`occurrences`. Note that `locates` should be allocated and freed by users.
+
+```
+unsigned int locate(char* pattern, unsigned int sp, unsigned int ep,
+	unsigned int sp1, unsigned int ep1, unsigned int* locates, unsigned int length_read, unsigned int* occurrences);
+```
 
 
 Note
