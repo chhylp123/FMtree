@@ -71,7 +71,7 @@ unsigned int indenpendent_creadte_index(unsigned int text_length, char** input_r
 unsigned int load_index(char* filename_prefix);
 ```
 
-- get the result of **count** query of `pattern`[0..length-1].
+- get the result of **count** query of `pattern`[0..`length`-1]. Write `sp` and `ep` such that (`*sp`, `*ep`) is the SA range of `pattern`[0..`length`-1]. Besides, this function also writes `sp1` and `ep1` such that (`*sp1`, `*ep1`) is the SA range of `pattern`[1..`length`-1].
 ```
 inline unsigned int count(char* pattern, unsigned int length,
 	unsigned int* sp, unsigned int* ep, unsigned int* sp1, unsigned int* ep1)
