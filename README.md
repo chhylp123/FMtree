@@ -57,7 +57,7 @@ Example data:
 
 * Human genome including 3.16 billion characters can be found in: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz. Please note that before building the index for mouse genome, users should preprocess it utilizing the program named "preprocess". This program will remove the the characters which not belong to {a, c, g, t, A, C, G, T}.
 
-* Dna.200MB consists of 209.72 million characters from Pizza&Chili corpus can be found in: http://pizzachili.dcc.uchile.cl/. Note that since this file is not formated by fasta format, users should manually remove the characters which not belong to {a, c, g, t, A, C, G, T}.
+* Dna.200MB consists of 209.72 million characters from Pizza&Chili corpus can be found in: http://pizzachili.dcc.uchile.cl/texts/dna/dna.200MB.gz. Note that since this file is not formated by fasta format, users should manually remove the characters which not belong to {a, c, g, t, A, C, G, T}.
 
 
 API
