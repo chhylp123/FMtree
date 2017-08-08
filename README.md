@@ -51,6 +51,12 @@ For the program named "preprocess":
 
 * Example: ./preprocess --index human.fasta (the output text is saved in human.fasta.not_N).
 
+Example data:
+
+* Mouse genome: ftp://ftp.ensembl.org/pub/release-89/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz.
+
+* Human genome: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz.
+
 
 API
 -------
