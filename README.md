@@ -57,7 +57,7 @@ Example data:
 
 * Human genome: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz.
 
-* Please note that before building the index for these genomes, users should preprocess them utilizing the program named "preprocess". This program will remove the the characters which not belong to {a, c, g, t, A, C, G, T}.
+* **Please note that before building the index for these genomes, users should preprocess them utilizing the program named "preprocess". This program will remove the the characters which not belong to {a, c, g, t, A, C, G, T}.**
 
 API
 -------
