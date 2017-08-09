@@ -53,7 +53,7 @@ For the program named "preprocess":
 
 Example data:
 
-* Mouse genome including 2.73 billion characters can be found in: ftp://ftp.ensembl.org/pub/release-89/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz. Please note that before building the index for mouse genome, users should preprocess it utilizing the program named "preprocess". This program will remove the the characters which not belong to {a, c, g, t, A, C, G, T}.
+* Mouse genome including 2.73 billion characters can be found in: ftp://ftp.ensembl.org/pub/release-89/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz. Please note that before building the index for mouse genome, users should preprocess it using the program named "preprocess". By utilizing this program, any character which does not belong {a, c, g, t, A, C, G, T} is randomly converted to one of {a, c, g, t, A, C, G, T}.
 
 * Human genome including 3.16 billion characters can be found in: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz. Please note that before building the index for mouse genome, users should preprocess it utilizing the program named "preprocess". This program will remove the the characters which not belong to {a, c, g, t, A, C, G, T}.
 
