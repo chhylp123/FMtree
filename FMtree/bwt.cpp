@@ -571,7 +571,15 @@ unsigned int *sa, unsigned int need_step, unsigned int* accessed_sa)
 	unsigned int i = 0;
 
 
-	if (line == bitmapper_index_params.shapline) return 0;
+	///if (line == bitmapper_index_params.shapline) return 0;
+	if (line == bitmapper_index_params.shapline)
+	{
+		(*accessed_sa) = 0;
+		return 1;
+	}
+
+
+
 	unsigned int actually_line;
 	unsigned int last;
 
@@ -651,8 +659,10 @@ unsigned int *sa, unsigned int need_step, unsigned int* accessed_sa)
 		{
 			(*accessed_sa) = i;
 
-			return i;
+			return 1;
 		}
+
+
 
 
 
